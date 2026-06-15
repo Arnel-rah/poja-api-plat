@@ -1,0 +1,9 @@
+plugins {
+    id 'java'
+}
+
+java {
+    group = 'api.poja.io'
+    sourcecompatibility = '21'
+    targetcompatibility = '21'
+}

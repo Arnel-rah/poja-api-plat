@@ -1,0 +1,1 @@
+update offer set max_apps = 12 where id = 'cb038529-dea0-43ab-b9bc-262ab668f150'

@@ -1,0 +1,520 @@
+openapi: "3.0.2"
+info:
+  title: Poja Api
+  version: "latest"
+servers:
+  - url: https://api.preprod.poja.io
+
+paths:
+  /ping:
+    get:
+      tags:
+        - Health
+      operationId: ping
+      responses:
+        "200":
+          description: pong
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: pong
+        "429":
+          $ref: "./api.yml#/components/responses/429"
+        "500":
+          $ref: "./api.yml#/components/responses/500"
+  /beta-ping:
+    get:
+      security:
+        - bearerAuth: []
+      tags:
+        - Health
+      operationId: beta-ping
+      responses:
+        "200":
+          description: pong
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: pong
+        "429":
+          $ref: "./api.yml#/components/responses/429"
+        "500":
+          $ref: "./api.yml#/components/responses/500"
+  /whoami:
+    $ref: "./security-api.yml#/operations/whoami"
+  /token:
+    $ref: "./security-api.yml#/operations/token"
+  /gh-repos/{repo_owner}/{repo_name}/github-workflow-state:
+    $ref: "./env-deploy-api.yml#/operations/githubWorkflowState"
+  /gh-repos/{repo_owner}/{repo_name}/upload-build-uri:
+    $ref: "./env-deploy-api.yml#/operations/uploadUri"
+  /gh-repos/{repo_owner}/{repo_name}/env-deploys:
+    $ref: "./env-deploy-api.yml#/operations/deploys"
+  /offers:
+    $ref: "./subscription-api.yml#/operations/offers"
+  /offers/{offer_id}:
+    $ref: "./subscription-api.yml#/operations/offer"
+  /billings:
+    $ref: "./billing-api.yml#/operations/usersBilling"
+  /users:
+    $ref: "./user-api.yaml#/operations/users"
+  /user-stats:
+    $ref: "./user-api.yaml#/operations/userStatistics"
+  /users/{userId}:
+    $ref: "./user-api.yaml#/operations/user"
+  /users/{userId}/statuses:
+    $ref: "./user-api.yaml#/operations/userStatuses"
+  /users/{userId}/installations:
+    $ref: "./github-app-installation-api.yml#/operations/userInstallations"
+  /users/{userId}/installations/{installationId}/repositories:
+    $ref: "./github-app-installation-api.yml#/operations/userRepositories"
+  /poja-versions:
+    $ref: "./poja-related-api.yml#/operations/versions"
+  /poja-versions/{pojaVersion}/changelog:
+    $ref: "./poja-related-api.yml#/operations/versionChangelog"
+  /orgs/{orgId}/consoleUser:
+    $ref: "./org-api.yml#/operations/consoleUserOperations"
+  /orgs/{orgId}/installations:
+    $ref: "./github-app-installation-api.yml#/operations/installations"
+  /orgs/{orgId}/installations/{installationId}/repositories:
+    $ref: "./github-app-installation-api.yml#/operations/repositories"
+  /users/{userId}/installations/{installationId}/search/repositories:
+    $ref: "./github-app-installation-api.yml#/operations/searchRepositories"
+  /users/{userId}/billing:
+    $ref: "./billing-api.yml#/operations/userBilling"
+  /users/{userId}/applications:
+    $ref: "./application-api.yml#/operations/userApplications"
+  /orgs/{orgId}/applications:
+    $ref: "./application-api.yml#/operations/orgApplications"
+  /orgs/{orgId}/application:
+    $ref: "./application-api.yml#/operations/orgApplication"
+  /orgs/{orgId}/applications/{applicationId}:
+    $ref: "./application-api.yml#/operations/orgApplicationsById"
+  /orgs/{orgId}/applications/{applicationId}/statuses:
+    $ref: "./application-api.yml#/operations/applicationStatuses"
+  /orgs/{orgId}/applications/{applicationId}/billing:
+    $ref: "./billing-api.yml#/operations/appBilling"
+  /orgs/{orgId}/applications/{applicationId}/environments:
+    $ref: "./environment-api.yml#/operations/environments"
+  /orgs/{orgId}/applications/{applicationId}/environments/{environmentId}:
+    $ref: "./environment-api.yml#/operations/environmentsById"
+  /orgs/{orgId}/applications/{applicationId}/environments/{environmentId}/statuses:
+    $ref: "./environment-api.yml#/operations/environmentStatuses"
+  /orgs/{orgId}/applications/{applicationId}/environments/{environmentId}/deployments:
+    $ref: "./environment-api.yml#/operations/deployEnv"
+  /orgs/{orgId}/applications/{applicationId}/environments/{environmentId}/billing:
+    $ref: "./billing-api.yml#/operations/envBilling"
+  /orgs/{orgId}/applications/{applicationId}/environments/{environmentId}/configs/{configId}:
+    $ref: "./environment-api.yml#/operations/environmentConfig"
+  /orgs/{orgId}/applications/{applicationId}/environments/{environmentId}/configs/{configId}/deploy:
+    $ref: "./environment-api.yml#/operations/saveAppEnvConfAndDeploy"
+  /orgs/{orgId}/applications/{applicationId}/deployments:
+    $ref: "./application-api.yml#/operations/applicationDeployments"
+  /orgs/{orgId}/applications/{applicationId}/deployments/{deploymentId}:
+    $ref: "./application-api.yml#/operations/applicationDeploymentsById"
+  /orgs/{orgId}/applications/{applicationId}/deployments/{deploymentId}/config:
+    $ref: "./application-api.yml#/operations/applicationDeploymentConfig"
+  /orgs/{orgId}/applications/{applicationId}/deployments/{deploymentId}/states:
+    $ref: "./application-api.yml#/operations/applicationDeploymentStates"
+  /orgs/{orgId}/applications/{applicationId}/setup/states:
+    $ref: "./application-api.yml#/operations/AppSetupStates"
+  /orgs/{orgId}/applications/{applicationId}/environments/{environmentId}/stacks:
+    $ref: "./stack-api.yml#/operations/stacks"
+  /orgs/{orgId}/applications/{applicationId}/environments/{environmentId}/stacks/{stackId}:
+    $ref: "./stack-api.yml#/operations/stacksById"
+  /orgs/{orgId}/applications/{applicationId}/environments/{environmentId}/stacks/{stackType}/events:
+    $ref: "./stack-api.yml#/operations/events"
+  /orgs/{orgId}/applications/{applicationId}/environments/{environmentId}/stacks/{stackId}/outputs:
+    $ref: "./stack-api.yml#/operations/outputs"
+  /orgs/{orgId}/applications/{applicationId}/monitoringResources:
+    $ref: "./stack-api.yml#/operations/monitoringResources"
+  /orgs/{orgId}/applications/{applicationId}/environments/{environmentId}/resources:
+    $ref: "./stack-api.yml#/operations/resources"
+  /orgs/{orgId}/applications/{applicationId}/environments/{environmentId}/functions/{functionName}/logs:
+    $ref: "./log-api.yml#/operations/envLogByFunction"
+  /orgs/{orgId}/applications/{applicationId}/log-queries:
+    $ref: "./log-api.yml#/operations/createLogQuery"
+  /orgs/{orgId}/applications/{applicationId}/log-queries/{logQueryId}:
+    $ref: "./log-api.yml#/operations/readLogQuery"
+  /orgs/{orgId}/invites:
+    $ref: "./org-api.yml#/operations/organizationInvites"
+  /orgs/{orgId}/invites/{inviteId}:
+    $ref: "./org-api.yml#/operations/organizationInvite"
+  /users/{userId}/payments:
+    $ref: "./payment-api.yml#/operations/payments"
+  /users/{userId}/payments/{paymentId}:
+    $ref: "./payment-api.yml#/operations/updatePayment"
+  /users/{userId}/payment-details/payment-methods:
+    $ref: "./payment-api.yml#/operations/methods"
+  /users/{userId}/payment-details:
+    $ref: "./payment-api.yml#/operations/details"
+  /users/{userId}/orgs:
+    $ref: "./org-api.yml#/operations/userOrgs"
+  /users/{userId}/orgs/billings:
+    $ref: "./billing-api.yml#/operations/orgsBilling"
+  /users/{userId}/org-invites:
+    $ref: "./org-api.yml#/operations/userInvites"
+  /users/{userId}/subscriptions:
+    $ref: "./subscription-api.yml#/operations/subscriptions"
+  /users/{userId}/subscriptions/{subscription_id}:
+    $ref: "./subscription-api.yml#/operations/subscription"
+  /users/{userId}/subscriptions/{subscription_id}/payment:
+    $ref: "./subscription-api.yml#/operations/subscriptionPayment"
+  /users/{userId}/billing-discounts:
+    $ref: "./billing-api.yml#/operations/userDiscounts"
+  /users/{userId}/payment-setup-states:
+    $ref: "./user-api.yaml#/operations/userPaymentSetupStates"
+  /orgs/{orgId}:
+    $ref: "./org-api.yml#/operations/readOrganization"
+  /orgs/{orgId}/users:
+    $ref: "./org-api.yml#/operations/orgUsers"
+  /orgs/{orgId}/invitees/suggestions:
+    $ref: "./org-api.yml#/operations/organizationInvitees"
+  /orgs/{orgId}/billing:
+    $ref: "./billing-api.yml#/operations/orgBilling"
+  /orgs/{orgId}/setup-states:
+    $ref: "./org-api.yml#/operations/organizationSetupStates"
+  /orgs/{orgId}/imports:
+    $ref: "./importer-api.yml#/operations/organizationApplicationImports"
+  /orgs/{orgId}/imports/{importId}:
+    $ref: "./importer-api.yml#/operations/organizationApplicationImportById"
+  /orgs/{orgId}/imports/{importId}/states:
+    $ref: "./importer-api.yml#/operations/organizationApplicationImportStates"
+  /users/{userId}/cost:
+    $ref: "./cost-api.yml#/operations/userCost"
+  /total-cost:
+    $ref: "./cost-api.yml#/operations/totalCost"
+  /application-templates:
+    $ref: "./application-api.yml#/operations/applicationTemplates"
+  /application-templates/{templateId}:
+    $ref: "./application-api.yml#/operations/applicationTemplateById"
+  /application-templates/{templateId}/config:
+    $ref: "./application-api.yml#/operations/applicationTemplateConfigById"
+  /orgs/{orgId}/application-templates/{templateId}/clone:
+    $ref: "./application-api.yml#/operations/cloneApplicationTemplate"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+
+  parameters:
+    orgId:
+      name: orgId
+      in: path
+      description: The identifier of the org
+      schema:
+        type: string
+      required: true
+    userId:
+      name: userId
+      in: path
+      description: The identifier of the user
+      schema:
+        type: string
+      required: true
+    applicationId:
+      name: applicationId
+      in: path
+      description: The identifier of the application
+      schema:
+        type: string
+      required: true
+    environmentId:
+      name: environmentId
+      in: path
+      description: The identifier of the environment
+      schema:
+        type: string
+      required: true
+    logId:
+      name: logId
+      in: path
+      description: The identifier of the log of the specified environment
+      schema:
+        type: string
+      required: true
+    variableId:
+      name: variableId
+      in: path
+      description: The identifier of the environment variable of the specified application
+      schema:
+        type: string
+      required: true
+    stackId:
+      name: stackId
+      in: path
+      description: The identifier of the stack of a given environment
+      schema:
+        type: string
+      required: true
+    page:
+      name: page
+      in: query
+      description: page number
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    page_size:
+      name: page_size
+      in: query
+      description: page_size
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 500
+        default: 30
+    deploymentId:
+      name: deploymentId
+      in: path
+      description: deploymentId
+      required: true
+      schema:
+        type: string
+    startTime:
+      name: startTime
+      in: query
+      schema:
+        type: string
+        format: date-time
+      required: false
+    endTime:
+      name: endTime
+      in: query
+      schema:
+        type: string
+        format: date-time
+      required: false
+    year:
+      name: year
+      in: query
+      description: year to filter from
+      schema:
+        type: integer
+    month:
+      name: month
+      in: query
+      description: month to filter from
+      schema:
+        $ref: "./payment-api.yml#/components/schemas/MonthType"
+    paymentId:
+      name: paymentId
+      in: path
+      description: The identifier of the payment
+      schema:
+        type: string
+      required: true
+    username:
+      name: username
+      in: query
+      description: Case insensitive username to search
+      schema:
+        type: string
+    organizationInviteStatus:
+      name: status
+      in: path
+      description: The status of the organization
+      schema:
+        $ref: "./org-api.yml#/components/schemas/OrganizationInviteType"
+      required: true
+    organizationInviteId:
+      name: inviteId
+      in: path
+      description: The id of the invitation
+      schema:
+        type: string
+      required: true
+    importId:
+      name: importId
+      in: path
+      description: The id of the import
+      schema:
+        type: string
+      required: true
+    archived:
+      name: archived
+      in: query
+      schema:
+        type: boolean
+      required: false
+    sortOrder:
+      name: sortOrder
+      in: query
+      description: The sorting order
+      schema:
+        $ref: "./billing-api.yml#/components/schemas/SortOrder"
+    sortBy:
+      name: sortBy
+      in: query
+      description: The sorting field
+      schema:
+        $ref: "./billing-api.yml#/components/schemas/SortBy"
+    sortUsersBy:
+      name: sortBy
+      in: query
+      description: The sorting field
+      schema:
+        $ref: "./user-api.yaml#/components/schemas/SortUsersBy"
+    joinedFrom:
+      name: joinedFrom
+      in: query
+      description: Filter by join date from
+      schema:
+        $ref: "./billing-api.yml#/components/schemas/JoinedFrom"
+    joinedTo:
+      name: to
+      in: query
+      description: Filter by join date to
+      schema:
+        $ref: "./billing-api.yml#/components/schemas/JoinedTo"
+    q:
+      name: q
+      in: query
+      description: search query
+      schema:
+        type: string
+      required: false
+    pojaVersion:
+      name: pojaVersion
+      in: path
+      description: |
+        human readable poja version, e.g: 2.1.0, 3.0.0
+      schema:
+        type: string
+      required: true
+    templateId:
+        name: templateId
+        in: path
+        description: The identifier of the template
+        schema:
+            type: string
+        required: true
+
+  responses:
+    "400":
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/BadRequestException"
+    "401":
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/UnauthorizedException"
+    # TODO: add to all endpoints
+    "402":
+      description: payment required
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/PaymentRequiredException"
+    "403":
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/NotAuthorizedException"
+    "404":
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ResourceNotFoundException"
+    "429":
+      description: Too many requests to the API
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/TooManyRequestsException"
+    "500":
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/InternalServerException"
+    "503":
+      description: Service Unavailable
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ServiceUnavailableException"
+
+  schemas:
+    ##############################################################
+    ###############  RequestBodies And Responses #################
+    ##############################################################
+    PagedResponse:
+      type: object
+      properties:
+        page_size:
+          type: integer
+        page_number:
+          type: integer
+        has_previous:
+          type: boolean
+        count:
+          type: integer
+    #############################################
+    ###############  Exceptions #################
+    #############################################
+    ExceptionModel:
+      type: object
+      properties:
+        type:
+          type: string
+        message:
+          type: string
+    PaymentRequiredException:
+      allOf:
+        - $ref: "#/components/schemas/ExceptionModel"
+      example:
+        type: PaymentRequiredException
+        message: Payment Required
+    UnauthorizedException:
+      allOf:
+        - $ref: "#/components/schemas/ExceptionModel"
+      example:
+        type: UnauthorizedException
+        message: Unauthorized
+    BadRequestException:
+      allOf:
+        - $ref: "#/components/schemas/ExceptionModel"
+      example:
+        type: BadRequestException
+        message: Bad request
+    NotAuthorizedException:
+      allOf:
+        - $ref: "#/components/schemas/ExceptionModel"
+      example:
+        type: NotAuthorizedException
+        message: Not authorized
+    ResourceNotFoundException:
+      allOf:
+        - $ref: "#/components/schemas/ExceptionModel"
+      example:
+        type: ResourceNotFoundException
+        message: Resource of type <T> identified by <I> not found
+    TooManyRequestsException:
+      allOf:
+        - $ref: "#/components/schemas/ExceptionModel"
+      example:
+        type: TooManyRequestsException
+        message: Too many requests
+    InternalServerException:
+      allOf:
+        - $ref: "#/components/schemas/ExceptionModel"
+      example:
+        type: InternalServerException
+        message: Unexpected error
+    ServiceUnavailableException:
+      allOf:
+        - $ref: "#/components/schemas/ExceptionModel"
+      example:
+        type: ServiceUnavailableException
+        message: Service unavailable

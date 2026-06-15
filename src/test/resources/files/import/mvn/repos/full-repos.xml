@@ -1,0 +1,47 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                             http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>api.poja.io</groupId>
+    <artifactId>poja-app</artifactId>
+    <version>1.0.0</version>
+    <packaging>jar</packaging>
+
+    <properties>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+    </properties>
+
+    <repositories>
+        <repository>
+            <id>maven-central</id>
+            <name>MavenRepo</name>
+            <url>https://repo.maven.apache.org/maven2/</url>
+        </repository>
+
+        <repository>
+            <id>google</id>
+            <name>Google</name>
+            <url>https://dl.google.com/dl/android/maven2/</url>
+        </repository>
+
+        <repository>
+            <id>gradle-central-plugin-repository</id>
+            <name>Gradle Central Plugin Repository</name>
+            <url>https://plugins.gradle.org/m2</url>
+        </repository>
+
+        <repository>
+            <id>gradle-libs-releases</id>
+            <name>gradle libs releases</name>
+            <url>https://repo.gradle.org/gradle/libs-releases/</url>
+        </repository>
+
+        <repository>
+            <id>custom-repo</id>
+            <name>CustomRepo</name>
+            <url>https://my.custom.repo/dl/</url>
+        </repository>
+    </repositories>
+</project>

@@ -1,0 +1,1 @@
+alter table "user" add column if not exists "last_connection" timestamp without time zone not null default now();

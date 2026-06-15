@@ -1,0 +1,61 @@
+---
+compute:
+  frontal_memory: 1024
+  frontal_function_timeout: 600
+  frontal_function_invocation_method: "http-api"
+  worker_1_memory: 512
+  worker_2_memory: 513
+  worker_1_batch: 5
+  worker_2_batch: 6
+  with_queues_nb: 2
+  api_gateway_timeout: 30000
+  worker_function_1_timeout: 600
+  worker_function_2_timeout: 700
+concurrency:
+  frontal_reserved_concurrent_executions_nb: 5
+  worker_1_reserved_concurrent_executions_nb: 5
+  worker_2_reserved_concurrent_executions_nb: 5
+database:
+  with_database: "NONE"
+emailing:
+  ses_source: "mail@mail.com"
+gen_api_client:
+  aws_account_id: null
+  with_publish_to_npm_registry: null
+  ts_client_default_openapi_server_url: null
+  ts_client_api_url_env_var_name: null
+  codeartifact_repository_name: null
+  codeartifact_domain_name: null
+general:
+  app_name: "appname-9f7332d1"
+  with_snapstart: false
+  package_full_name: "com.test.api"
+  custom_java_repositories: []
+  custom_java_deps: []
+  custom_java_env_vars: {}
+  poja_python_repository_name: null
+  poja_python_repository_domain: null
+  poja_domain_owner: null
+  public_generator_version: "1.3.2"
+integration:
+  with_sentry: false
+  with_sonar: false
+  with_codeql: false
+  with_file_storage: false
+  with_swagger_ui: false
+networking:
+  region: "eu-west-3"
+  with_own_vpc: true
+  ssm_sg_id: "sg-id"
+  ssm_subnet1_id: "subnet-1"
+  ssm_subnet2_id: "subnet-2"
+scheduled_tasks:
+- name: "ScheduledTask1"
+  description: "some scheduled task"
+  class_name: "classname"
+  schedule_expression: "cron(0 6 * * ? *)"
+  event_stack_source: 1
+testing:
+  java_facade_it: "FacadeIT"
+  jacoco_min_coverage: 0.2
+version: "1.3.2"

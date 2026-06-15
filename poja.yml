@@ -1,0 +1,83 @@
+compute:
+  api_gateway_timeout: 30000
+  frontal_function_invocation_method: lambda-url
+  frontal_function_timeout: 60
+  frontal_memory: 1024
+  with_queues_nb: 2
+  worker_1_batch: 5
+  worker_1_memory: 2048
+  worker_2_batch: 1
+  worker_2_memory: 1100
+  worker_function_1_timeout: 600
+  worker_function_2_timeout: 600
+concurrency:
+  frontal_reserved_concurrent_executions_nb: 50
+  worker_1_reserved_concurrent_executions_nb: 50
+  worker_2_reserved_concurrent_executions_nb: 15
+database:
+  with_database: non-poja-managed-postgres
+emailing:
+  ses_source: noreply@mail.poja.io
+gen_api_client:
+  aws_account_id: 057045785189
+  codeartifact_domain_name: poja-idp-dev
+  codeartifact_repository_name: npm-store-poja-idp-plat-10f4a86e
+  ts_client_api_url_env_var_name: REACT_APP_POJA_API_URL
+  ts_client_default_openapi_server_url: api.test.poja.io
+  with_gen_clients: 'true'
+  with_publish_to_npm_registry: 'true'
+general:
+  app_name: poja-plat-10f4a86e-api
+  cli_version: 21.5.0
+  custom_java_deps: poja-custom-java-deps.txt
+  custom_java_env_vars: poja-custom-java-env-vars.txt
+  custom_java_repositories: poja-custom-java-repositories.txt
+  java_main_class: PojaApplication
+  package_full_name: api.poja.io
+  poja_domain_owner: 057045785189
+  poja_python_repository_domain: poja-idp-dev
+  poja_python_repository_name: python-store-poja-idp-plat-10f4a86e
+  with_snapstart: 'true'
+integration:
+  with_codeql: 'true'
+  with_file_storage: 'true'
+  with_sentry: 'true'
+  with_sonar: 'false'
+  with_swagger_ui: 'false'
+networking:
+  region: eu-west-3
+  ssm_sg_id: 'null'
+  ssm_subnet1_id: 'null'
+  ssm_subnet2_id: 'null'
+  with_own_vpc: 'false'
+scheduled_tasks:
+- class_name: RefreshUsersBillingInfoTriggered
+  description: Scheduler that triggers the refresh of users billing info
+  event_stack_source: '1'
+  name: RefreshUsersBillingInfo
+  schedule_expression: cron(0 6,12,18 * * ? *)
+- class_name: EndOfDayRefreshUsersBillingInfoTriggered
+  description: Scheduler that triggers the refresh of users billing info
+  event_stack_source: '1'
+  name: EndOfDayRefreshUsersBillingInfo
+  schedule_expression: cron(0 0 * * ? *)
+- class_name: PaymentAttemptTriggered
+  description: Scheduler which triggers paymentAttempts function
+  event_stack_source: '1'
+  name: MonthlyPaymentAttemptsScheduler
+  schedule_expression: cron(0 0 1 * ? *)
+- class_name: UsersSubscriptionRenewalRequested
+  description: Scheduler which renews user subscriptions
+  event_stack_source: '1'
+  name: UsersSubscriptionRenewalRequestedScheduler
+  schedule_expression: cron(0 0 L * ? *)
+- class_name: RefreshUsersCostTriggered
+  description: Scheduler which refreshes user costs
+  event_stack_source: '1'
+  name: RefreshUsersCost
+  schedule_expression: cron(0 3 * * ? *)
+testing:
+  custom_java_gradle_test_args: poja-custom-java-gradle-test-args.txt
+  custom_java_test_env_vars: poja-custom-java-test-env-vars.txt
+  jacoco_min_coverage: '0.4'
+  java_facade_it: api.poja.io.conf.MockedThirdParties

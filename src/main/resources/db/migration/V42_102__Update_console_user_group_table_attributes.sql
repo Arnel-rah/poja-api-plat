@@ -1,0 +1,1 @@
+alter table if exists "console_user_group" alter column user_id drop not null;

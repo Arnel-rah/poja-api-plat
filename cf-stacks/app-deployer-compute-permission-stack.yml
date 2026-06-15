@@ -1,0 +1,27 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: poja-app-deployer - Compute permission
+
+Parameters:
+  Env:
+    Type: String
+  TrustedAccountId:
+    Type: String
+
+Resources:
+  ExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Join [ '', [ poja-app-deployer-plat-10f4a86e-, !Ref Env, -ExecutionRole ] ]
+      MaxSessionDuration: 43200
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Join [ '', [ "arn:aws:iam::", !Ref TrustedAccountId, ":role/poja-plat-10f4a86e-api-", !Ref Env, "-ExecutionRole" ] ]
+            Action: "sts:AssumeRole"
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/AdministratorAccess'
+
+Outputs:
+  ExecutionRoleArn:
+    Value: !GetAtt ExecutionRole.Arn

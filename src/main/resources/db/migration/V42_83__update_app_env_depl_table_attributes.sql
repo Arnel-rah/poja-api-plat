@@ -1,0 +1,2 @@
+alter table if exists "app_environment_deployment"
+    add column if not exists "gh_workflow_run_attempt" integer default 1;

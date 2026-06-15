@@ -1,0 +1,1 @@
+alter table application_template add column if not exists base_config_id varchar;

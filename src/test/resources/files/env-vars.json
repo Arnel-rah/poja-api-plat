@@ -1,0 +1,12 @@
+[
+  {
+    "name": "ENV1",
+    "value": "dummy",
+    "testValue": "dummy"
+  },
+  {
+    "name": "ENV2",
+    "value": "dummy",
+    "testValue": "dummy"
+  }
+]

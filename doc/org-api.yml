@@ -1,0 +1,430 @@
+openapi: 3.1.0
+operations:
+  userOrgs:
+    parameters:
+      - $ref: "./api.yml#/components/parameters/userId"
+    get:
+      tags:
+        - Org
+      summary: list organizations
+      operationId: getOrganizations
+      parameters:
+        - $ref: "./api.yml#/components/parameters/page"
+        - $ref: "./api.yml#/components/parameters/page_size"
+      responses:
+        "200":
+          description: list organizations
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PagedOrganizations"
+        "400":
+          $ref: "./api.yml#/components/responses/400"
+        "429":
+          $ref: "./api.yml#/components/responses/429"
+        "500":
+          $ref: "./api.yml#/components/responses/500"
+    put:
+      parameters:
+        - $ref: "./api.yml#/components/parameters/userId"
+      tags:
+        - Org
+      summary: create/update organizations
+      operationId: crupdateOrganizations
+      requestBody:
+        required: true
+        description: Organizations to crupdate
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/Organization"
+      responses:
+        "200":
+          description: the crupdated organizations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Organization"
+        "400":
+          $ref: "./api.yml#/components/responses/400"
+        "429":
+          $ref: "./api.yml#/components/responses/429"
+        "500":
+          $ref: "./api.yml#/components/responses/500"
+  orgUsers:
+    parameters:
+      - $ref: "./api.yml#/components/parameters/orgId"
+    get:
+      tags:
+        - Org
+        - User
+      summary: list organization's members
+      operationId: getOrganizationUsers
+      parameters:
+        - $ref: "./api.yml#/components/parameters/page"
+        - $ref: "./api.yml#/components/parameters/page_size"
+      responses:
+        "200":
+          description: list organization's members
+          content:
+            application/json:
+              schema:
+                $ref: "./user-api.yaml#/components/schemas/PagedUsers"
+        "400":
+          $ref: "./api.yml#/components/responses/400"
+        "429":
+          $ref: "./api.yml#/components/responses/429"
+        "500":
+          $ref: "./api.yml#/components/responses/500"
+    put:
+      tags:
+        - Org
+        - User
+      summary: crupdate organization members
+      operationId: crupdateOrganizationUsers
+      requestBody:
+        required: true
+        description: users to add/remove from organization
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/CrupdateOrganizationMembersRequestBody"
+      responses:
+        "200":
+          description: users that had been added/removed from organization
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "./user-api.yaml#/components/schemas/User"
+        "400":
+          $ref: "./api.yml#/components/responses/400"
+        "429":
+          $ref: "./api.yml#/components/responses/429"
+        "500":
+          $ref: "./api.yml#/components/responses/500"
+  readOrganization:
+    parameters:
+      - $ref: "./api.yml#/components/parameters/orgId"
+    get:
+      tags:
+        - Org
+      summary: get an organization by its identifier
+      operationId: getOrgnizationById
+      responses:
+        "200":
+          description: the specified organization
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Organization"
+        "400":
+          $ref: "./api.yml#/components/responses/400"
+        "404":
+          $ref: "./api.yml#/components/responses/404"
+        "429":
+          $ref: "./api.yml#/components/responses/429"
+        "500":
+          $ref: "./api.yml#/components/responses/500"
+  userInvites:
+    parameters:
+      - $ref: "./api.yml#/components/parameters/userId"
+    get:
+      tags:
+        - Org
+      summary: list paginated invites of a specified user
+      operationId: getUserOrginvites
+      parameters:
+        - $ref: "./api.yml#/components/parameters/page"
+        - $ref: "./api.yml#/components/parameters/page_size"
+      responses:
+        "200":
+          description: list invites of a specified user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PagedOrganizationInvites"
+        "400":
+          $ref: "./api.yml#/components/responses/400"
+        "429":
+          $ref: "./api.yml#/components/responses/429"
+        "500":
+          $ref: "./api.yml#/components/responses/500"
+    put:
+      tags:
+        - Org
+      summary: update user organization invites
+      operationId: updateUserOrganizationInvite
+      requestBody:
+        required: true
+        description: invites to update
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateOrganizationInviteRequestBody"
+      responses:
+        "200":
+          description: the updated invites
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationInvite"
+        "400":
+          $ref: "./api.yml#/components/responses/400"
+        "429":
+          $ref: "./api.yml#/components/responses/429"
+        "500":
+          $ref: "./api.yml#/components/responses/500"
+  organizationInvitees:
+    get:
+      tags:
+        - Org
+      summary: list paginated invitees suggestions of a specified org with username filter
+      operationId: getOrganizationInviteesSuggestions
+      parameters:
+        - $ref: "./api.yml#/components/parameters/orgId"
+        - $ref: "./api.yml#/components/parameters/username"
+        - $ref: "./api.yml#/components/parameters/page"
+        - $ref: "./api.yml#/components/parameters/page_size"
+      responses:
+        "200":
+          description: The list of the users filtered with the specified username
+          content:
+            application/json:
+              schema:
+                $ref: "./user-api.yaml#/components/schemas/PagedUsers"
+        "400":
+          $ref: "./api.yml#/components/responses/400"
+        "429":
+          $ref: "./api.yml#/components/responses/429"
+        "500":
+          $ref: "./api.yml#/components/responses/500"
+  organizationInvites:
+    get:
+      tags:
+        - Org
+      summary: list paginated invites for the specified organization with status filter
+      operationId: getOrganizationInvites
+      parameters:
+        - $ref: "./api.yml#/components/parameters/orgId"
+        - $ref: "./api.yml#/components/parameters/organizationInviteStatus"
+        - $ref: "./api.yml#/components/parameters/page"
+        - $ref: "./api.yml#/components/parameters/page_size"
+      responses:
+        "200":
+          description: The list of the invites filtered with the specified status
+          content:
+            application/json:
+              schema:
+                $ref: "./org-api.yml#/components/schemas/PagedOrganizationInvites"
+        "400":
+          $ref: "./api.yml#/components/responses/400"
+        "429":
+          $ref: "./api.yml#/components/responses/429"
+        "500":
+          $ref: "./api.yml#/components/responses/500"
+  organizationInvite:
+    delete:
+      tags:
+        - Org
+      summary: Cancel a specified invitation for a specified organization
+      operationId: cancelOrganizationInvite
+      parameters:
+        - $ref: "./api.yml#/components/parameters/orgId"
+        - $ref: "./api.yml#/components/parameters/organizationInviteId"
+      responses:
+        "200":
+          description: The canceled invitation
+          content:
+            application/json:
+              schema:
+                $ref: "./org-api.yml#/components/schemas/OrganizationInvite"
+        "400":
+          $ref: "./api.yml#/components/responses/400"
+        "404":
+          $ref: "./api.yml#/components/responses/404"
+        "429":
+          $ref: "./api.yml#/components/responses/429"
+        "500":
+          $ref: "./api.yml#/components/responses/500"
+  consoleUserOperations:
+    get:
+      security:
+        - bearerAuth: [ ]
+      tags:
+        - Org
+      parameters:
+        - $ref: './api.yml#/components/parameters/orgId'
+      summary: create console user for current organization
+      operationId: getConsoleUser
+      responses:
+        '200':
+          description: The identified console user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConsoleUser"
+        '400':
+          $ref: './api.yml#/components/responses/400'
+        '429':
+          $ref: './api.yml#/components/responses/429'
+        '500':
+          $ref: './api.yml#/components/responses/500'
+  organizationSetupStates:
+    get:
+      security:
+        - bearerAuth: [ ]
+      tags:
+        - Org
+      parameters:
+        - $ref: './api.yml#/components/parameters/orgId'
+      operationId: getOrganizationSetupStates
+      summary: Get the states of the setup of an organization
+      responses:
+        "200":
+          description: The setup states of the queried org
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetOrganizationSetupStates"
+        "400":
+          $ref: "./api.yml#/components/responses/400"
+        "403":
+          $ref: "./api.yml#/components/responses/403"
+        "404":
+          $ref: "./api.yml#/components/responses/404"
+        "429":
+          $ref: "./api.yml#/components/responses/429"
+        "500":
+          $ref: "./api.yml#/components/responses/500"
+
+components:
+  schemas:
+    CreateConsoleUser:
+      type: object
+      properties:
+        orgId:
+          type: string
+          description: used to double check orgId in path and orgId in body, orgId in path is the normally correct one, is here to add consistency for CreateConsoleUser component
+    ConsoleUser:
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/CreateConsoleUser"
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+        accountId:
+          type: string
+        consoleLoginUrl:
+          type: string
+          format: uri
+    Organization:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        creation_datetime:
+          type: string
+          format: date-time
+        owner_id:
+          type: string
+        can_invite_more_user:
+          type: boolean
+          default: true
+        members_count:
+          type: integer
+          format: int64
+
+    CrupdateOrganizationMembersRequestBody:
+      type: object
+      properties:
+        id_user:
+          type: string
+        movement_type:
+          $ref: "#/components/schemas/OrganizationMembersMovementTypeEnum"
+
+    OrganizationMembersMovementTypeEnum:
+      type: string
+      enum:
+        - ADD
+        - REMOVE
+
+    OrganizationInviteType:
+      type: string
+      enum:
+        - ACCEPTED
+        - REJECTED
+        - PENDING
+    UpdateOrganizationInviteRequestBody:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          $ref: "#/components/schemas/OrganizationInviteType"
+    OrganizationInvite:
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/UpdateOrganizationInviteRequestBody"
+        - properties:
+            org_id:
+              type: string
+            user_id:
+              type: string
+            invited_at:
+              type: string
+              format: date-time
+    GetOrganizationSetupStates:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/OrganizationSetupState"
+    OrganizationSetupState:
+      type: object
+      properties:
+        id:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        progressionStatus:
+          $ref: "#/components/schemas/OrganizationSetupStatusEnum"
+        executionType:
+          $ref: "./application-api.yml#/components/schemas/ExecutionType"
+    OrganizationSetupStatusEnum:
+      type: string
+      enum:
+        - ORGANIZATION_SETUP_IN_PROGRESS
+        - ORGANIZATION_SETUP_COMPLETED
+        - ORGANIZATION_SETUP_FAILED
+    PagedOrganizations:
+      type: object
+      allOf:
+        - $ref: "./api.yml#/components/schemas/PagedResponse"
+        - properties:
+            data:
+              type: array
+              items:
+                $ref: "#/components/schemas/Organization"
+    PagedOrganizationInvites:
+      type: object
+      allOf:
+        - $ref: "./api.yml#/components/schemas/PagedResponse"
+        - properties:
+            data:
+              type: array
+              items:
+                $ref: "#/components/schemas/OrganizationInvite"

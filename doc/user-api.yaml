@@ -1,0 +1,426 @@
+operations:
+  users:
+    post:
+      tags:
+        - User
+      summary: User signup
+      operationId: createUser
+      requestBody:
+        required: true
+        description: The users to create
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUsersRequestBody"
+      responses:
+        "200":
+          description: The created user accounts
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateUsersResponse"
+        "400":
+          $ref: "./api.yml#/components/responses/400"
+        "429":
+          $ref: "./api.yml#/components/responses/429"
+        "500":
+          $ref: "./api.yml#/components/responses/500"
+        "503":
+          $ref: "./api.yml#/components/responses/503"
+    get:
+      tags:
+        - User
+      summary: Get users list by criteria
+      operationId: getUsers
+      parameters:
+        - $ref: "./api.yml#/components/parameters/username"
+        - $ref: "./api.yml#/components/parameters/sortUsersBy"
+        - $ref: "./api.yml#/components/parameters/sortOrder"
+        - $ref: "./api.yml#/components/parameters/page"
+        - $ref: "./api.yml#/components/parameters/page_size"
+      responses:
+        "200":
+          description: The list of the users filtered with the specified username
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PagedUsers"
+        "400":
+          $ref: "./api.yml#/components/responses/400"
+        "429":
+          $ref: "./api.yml#/components/responses/429"
+        "500":
+          $ref: "./api.yml#/components/responses/500"
+  user:
+    parameters:
+      - $ref: "./api.yml#/components/parameters/userId"
+    get:
+      tags:
+        - User
+      summary: get an user its identifier
+      operationId: getUserById
+      responses:
+        "200":
+          description: the specified user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetUserResponse"
+        "400":
+          $ref: "./api.yml#/components/responses/400"
+        "404":
+          $ref: "./api.yml#/components/responses/404"
+        "429":
+          $ref: "./api.yml#/components/responses/429"
+        "500":
+          $ref: "./api.yml#/components/responses/500"
+    delete:
+      tags:
+        - User
+        - Admin
+      summary: archives an user, archives orgs apps, envs, console user
+      operationId: deleteUser
+      responses:
+        "200":
+          description: the archived user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          $ref: "./api.yml#/components/responses/400"
+        "404":
+          $ref: "./api.yml#/components/responses/404"
+        "429":
+          $ref: "./api.yml#/components/responses/429"
+        "500":
+          $ref: "./api.yml#/components/responses/500"
+  userStatistics:
+    get:
+      tags:
+        - User
+      summary: get user statistics
+      operationId: getUserStatistics
+      responses:
+        "200":
+          description: User statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserStatistics"
+        "400":
+          $ref: "./api.yml#/components/responses/400"
+        "404":
+          $ref: "./api.yml#/components/responses/404"
+        "429":
+          $ref: "./api.yml#/components/responses/429"
+        "500":
+          $ref: "./api.yml#/components/responses/500"
+  userStatuses:
+    parameters:
+      - $ref: "./api.yml#/components/parameters/userId"
+    put:
+      tags:
+        - User
+        - Admin
+      summary: suspends or activates an user
+      operationId: updateUserStatus
+      requestBody:
+        required: true
+        description: action todo
+        content:
+          "application/json":
+            schema:
+              $ref: "#/components/schemas/UpdateUserStatusRequestBody"
+      responses:
+        "200":
+          description: updated user with new status if applied
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          $ref: "./api.yml#/components/responses/400"
+        "404":
+          $ref: "./api.yml#/components/responses/404"
+        "429":
+          $ref: "./api.yml#/components/responses/429"
+        "500":
+          $ref: "./api.yml#/components/responses/500"
+    get:
+      tags:
+        - User
+        - Admin
+      summary: get list of user states
+      operationId: getUserStates
+      responses:
+        "200":
+          description: list of states of the identified user
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/UserStatesResponse"
+
+        "400":
+          $ref: "./api.yml#/components/responses/400"
+        "404":
+          $ref: "./api.yml#/components/responses/404"
+        "429":
+          $ref: "./api.yml#/components/responses/429"
+        "500":
+          $ref: "./api.yml#/components/responses/500"
+
+  userPaymentSetupStates:
+    parameters:
+      - $ref: "./api.yml#/components/parameters/userId"
+    get:
+      security:
+        - bearerAuth: [ ]
+      tags:
+        - User
+      operationId: getUserPaymentSetupStates
+      summary: Get the states of the payment setup of an user
+      responses:
+        "200":
+          description: The payment setup states of the queried user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetUserPaymentSetupStateResponse"
+        "400":
+          $ref: "./api.yml#/components/responses/400"
+        "403":
+          $ref: "./api.yml#/components/responses/403"
+        "404":
+          $ref: "./api.yml#/components/responses/404"
+        "429":
+          $ref: "./api.yml#/components/responses/429"
+        "500":
+          $ref: "./api.yml#/components/responses/500"
+components:
+  schemas:
+    CreateConsoleUser:
+      type: object
+      properties:
+        userId:
+          type: string
+          description: used to double check userId in path and userId in body, userId in path is the normally correct one, is here to add consistency for CreateConsoleUser component
+    ConsoleUser:
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/CreateConsoleUser"
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+        accountId:
+          type: string
+        consoleLoginUrl:
+          type: string
+          format: uri
+    CreateUser:
+      type: object
+      properties:
+        first_name:
+          type: string
+          example: Hajatiana
+        last_name:
+          type: string
+          example: Randrianary
+        email:
+          type: string
+          format: email
+        token:
+          type: string
+    GetUserResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+        first_name:
+          type: string
+          example: Hajatiana
+        last_name:
+          type: string
+          example: Randrianary
+        avatar:
+          type: string
+        isOrgMember:
+          type: boolean
+          default: false
+        can_be_invited_to_more_org:
+          type: boolean
+          default: true
+        archived:
+          type: boolean
+          default: false
+        status:
+          $ref: "#/components/schemas/UserStatusEnum"
+        status_reason:
+          type: string
+        status_updated_at:
+          type: string
+          format: date-time
+        status_checked_at:
+          type: string
+          format: date-time
+        active_subscription_id:
+          type: string
+        latest_subscription_id:
+          type: string
+        suspension_duration_in_seconds:
+          type: integer
+          format: int64
+        joined_at:
+          type: string
+          format: date-time
+        last_connection:
+          type: string
+          format: date-time
+    UserStatistics:
+      type: object
+      properties:
+        users_count:
+          type: integer
+          format: int64
+        max_users_nb:
+          type: integer
+          format: int64
+        suspended_users_nb:
+          type: integer
+          format: int64
+        archived_users_nb:
+          type: integer
+          format: int64
+    User:
+      allOf:
+        - $ref: "#/components/schemas/GetUserResponse"
+        - type: object
+          properties:
+            roles:
+              type: array
+              items:
+                $ref: "#/components/schemas/UserRoleEnum"
+            github_id:
+              type: string
+            plan_name:
+              type: string
+            stripe_id:
+              type: string
+            isBetaTester:
+              type: boolean
+              nullable: false
+            main_org_id:
+              type: string
+            isArchived:
+              type: boolean
+    UserRoleEnum:
+      type: string
+      enum:
+        - USER
+        - ADMIN
+    UserStatusEnum:
+      type: string
+      enum:
+        - ACTIVE
+        - UNDER_MODIFICATION
+        - UNKNOWN
+        - SUSPENDED
+    PagedUsers:
+      type: object
+      allOf:
+        - $ref: "./api.yml#/components/schemas/PagedResponse"
+        - properties:
+            data:
+              type: array
+              items:
+                $ref: "./user-api.yaml#/components/schemas/GetUserResponse"
+    CreateUsersRequestBody:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/CreateUser"
+    CreateUsersResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/User"
+    UpdateUserStatusRequestBody:
+      type: object
+      properties:
+        action:
+          type: string
+          enum:
+            - ACTIVATE
+            - SUSPEND
+        reason:
+          type: string
+    GetUserPaymentSetupStateResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserPaymentSetupState"
+    UserStatesResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserState"
+    UserState:
+      type: object
+      properties:
+        id:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        description:
+          type: string
+        userId:
+          type: string
+        progressionStatus:
+          $ref: "#/components/schemas/UserStatusEnum"
+        executionType:
+          $ref: "#/components/schemas/ExecutionType"
+    ExecutionType:
+      type: string
+      enum:
+        - SYNCHRONOUS
+        - ASYNCHRONOUS
+    UserPaymentSetupState:
+      type: object
+      properties:
+        id:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        progressionStatus:
+          $ref: "#/components/schemas/UserPaymentSetupStatusEnum"
+        executionType:
+          $ref: "./application-api.yml#/components/schemas/ExecutionType"
+    UserPaymentSetupStatusEnum:
+      type: string
+      enum:
+        - PAYMENT_SETUP_IN_PROGRESS
+        - PAYMENT_SETUP_COMPLETED
+        - PAYMENT_SETUP_FAILED
+    SortUsersBy:
+      type: string
+      enum:
+        - JOIN_DATE
+        - LAST_CONNECTION
+        - USERNAME

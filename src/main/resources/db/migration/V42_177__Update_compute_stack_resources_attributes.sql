@@ -1,0 +1,1 @@
+alter table if exists "compute_resources" add column if not exists frontal_function_reserved_concurrency integer;

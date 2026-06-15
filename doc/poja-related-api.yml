@@ -1,0 +1,831 @@
+openapi: 3.1.0
+operations:
+  versions:
+    get:
+      security:
+        - bearerAuth: []
+      tags:
+        - PojaVersions
+      operationId: getPojaVersions
+      summary: get all ready poja versions
+      responses:
+        "200":
+          description: the poja versions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PojaVersionsResponse"
+        "400":
+          $ref: "./api.yml#/components/responses/400"
+        "403":
+          $ref: "./api.yml#/components/responses/403"
+        "404":
+          $ref: "./api.yml#/components/responses/404"
+        "429":
+          $ref: "./api.yml#/components/responses/429"
+        "500":
+          $ref: "./api.yml#/components/responses/500"
+  versionChangelog:
+    parameters:
+      - $ref: "./api.yml#/components/parameters/pojaVersion"
+    put:
+      security:
+        - bearerAuth: []
+      tags:
+        - PojaVersions
+      operationId: crupdatePojaVersionChangelog
+      summary: get all ready poja versions
+      requestBody:
+        description: The changelog to use for the provided version
+        content:
+          "application/json":
+            schema:
+              $ref: "#/components/schemas/CrupdatePojaVersionChangelogRequestBody"
+      responses:
+        "200":
+          description: The updated poja version
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PojaVersion"
+        "400":
+          $ref: "./api.yml#/components/responses/400"
+        "403":
+          $ref: "./api.yml#/components/responses/403"
+        "404":
+          $ref: "./api.yml#/components/responses/404"
+        "429":
+          $ref: "./api.yml#/components/responses/429"
+        "500":
+          $ref: "./api.yml#/components/responses/500"
+components:
+  schemas:
+    PojaVersion:
+      type: object
+      properties:
+        major:
+          type: integer
+        minor:
+          type: integer
+        patch:
+          type: integer
+        human_readable_value:
+          type: string
+        changelog_url:
+          type: string
+          format: uri
+
+    CrupdatePojaVersionChangelogRequestBody:
+      type: object
+      properties:
+        changelog_md:
+          type: string
+          description: the changelog in markdown format
+
+    PojaVersionsResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/PojaVersion"
+
+    OneOfPojaConf:
+      oneOf:
+        - $ref: "#/components/schemas/PojaConf1"
+        - $ref: "#/components/schemas/PojaConf2"
+        - $ref: "#/components/schemas/PojaConf3"
+        - $ref: "#/components/schemas/PojaConf4"
+        - $ref: "#/components/schemas/PojaConf5"
+        - $ref: "#/components/schemas/PojaConf6"
+        - $ref: "#/components/schemas/PojaConf7"
+        - $ref: "#/components/schemas/PojaConf8"
+        - $ref: "#/components/schemas/PojaConf9"
+
+    ##############################################################
+    ###############  Poja Configurations #########################
+    ##############################################################
+    PojaConf:
+      type: object
+      description: will serve to type all poja confs
+      properties:
+        version:
+          type: string
+      discriminator:
+        propertyName: "version"
+        mapping:
+          "1.2.0": "#/components/schemas/PojaConf1"
+          "1.3.0": "#/components/schemas/PojaConf2"
+          "1.3.1": "#/components/schemas/PojaConf3"
+          "1.3.2": "#/components/schemas/PojaConf4"
+          "1.3.3": "#/components/schemas/PojaConf5"
+          "2.0.1": "#/components/schemas/PojaConf6"
+          "2.1.0": "#/components/schemas/PojaConf7"
+          "3.0.0": "#/components/schemas/PojaConf8"
+          "3.1.0": "#/components/schemas/PojaConf9"
+      required:
+        - version
+
+      ##############################################################
+      #################  Poja Conf #################################
+      ##############################################################
+    ConcurrencyConf:
+      type: object
+      properties:
+        frontal_reserved_concurrent_executions_nb:
+          type: integer
+          nullable: true
+        worker_reserved_concurrent_executions_nb:
+          type: integer
+          nullable: true
+
+    DatabaseConf:
+      type: object
+      properties:
+        with_database:
+          type: string
+          enum:
+            - NONE
+            - SELF_MANAGED_JPA_DATABASE
+        database_non_root_username:
+          type: string
+          nullable: true
+        database_non_root_password:
+          type: string
+          nullable: true
+        prod_db_cluster_timeout:
+          type: number
+          nullable: true
+          example: 300
+        aurora_min_capacity:
+          type: number
+          nullable: true
+        aurora_max_capacity:
+          type: number
+          nullable: true
+        aurora_scale_point:
+          type: number
+          nullable: true
+        aurora_sleep:
+          type: number
+          nullable: true
+          example: 300
+        aurora_auto_pause:
+          type: boolean
+          example: false
+          nullable: true
+
+    StringMap:
+      type: object
+      additionalProperties:
+        type: string
+
+    StringList:
+      type: array
+      items:
+        type: string
+
+    WithQueuesNbEnum:
+      type: number
+      enum:
+        - 0
+        - 2
+    GeneralPojaConf:
+      type: object
+      properties:
+        app_name:
+          type: string
+        with_snapstart:
+          type: boolean
+        with_queues_nb:
+          $ref: "#/components/schemas/WithQueuesNbEnum"
+        package_full_name:
+          type: string
+        custom_java_repositories:
+          type: array
+          items:
+            type: string
+        custom_java_deps:
+          type: array
+          items:
+            type: string
+        custom_java_env_vars:
+          $ref: "#/components/schemas/StringMap"
+    GenApiClientConf:
+      type: object
+      properties:
+        aws_account_id:
+          type: string
+          nullable: true
+        with_publish_to_npm_registry:
+          type: boolean
+        ts_client_default_openapi_server_url:
+          type: string
+          nullable: true
+        ts_client_api_url_env_var_name:
+          type: string
+          nullable: true
+        codeartifact_repository_name:
+          type: string
+          nullable: true
+        codeartifact_domain_name:
+          type: string
+          nullable: true
+    IntegrationConf:
+      type: object
+      properties:
+        with_sentry:
+          type: boolean
+          example: false
+        with_sonar:
+          type: boolean
+          example: false
+        with_codeql:
+          type: boolean
+          example: false
+        with_file_storage:
+          type: boolean
+          example: false
+        with_swagger_ui:
+          type: boolean
+          example: false
+    TestingConf:
+      type: object
+      properties:
+        java_facade_it:
+          type: string
+          example: "FacadeIT"
+        jacoco_min_coverage:
+          type: number
+          example: 0.8
+    MailingConf:
+      properties:
+        ses_source:
+          type: string
+          example: "noreply@nowhere.com"
+          nullable: true
+
+    ComputeConf:
+      type: object
+      properties:
+        frontal_memory:
+          type: number
+          example: 2048
+        frontal_function_timeout:
+          type: number
+          example: 30
+        worker_memory:
+          type: number
+          example: 1024
+        worker_batch:
+          type: number
+          example: 5
+        worker_function_1_timeout:
+          type: number
+          example: 600
+        worker_function_2_timeout:
+          type: number
+          example: 600
+        api_gateway_timeout:
+          type: number
+          example: 30
+
+  ##############################################################
+  ###############  Poja Conf 1 #################################
+  ##############################################################
+
+    PojaConf1:
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/PojaConf"
+      required:
+        - version
+      properties:
+        version:
+          type: string
+        general:
+          $ref: "#/components/schemas/GeneralPojaConf"
+        integration:
+          $ref: "#/components/schemas/IntegrationConf"
+        gen_api_client:
+          $ref: "#/components/schemas/GenApiClientConf"
+        concurrency:
+          $ref: "#/components/schemas/ConcurrencyConf"
+        compute:
+          $ref: "#/components/schemas/ComputeConf"
+        emailing:
+          $ref: "#/components/schemas/MailingConf"
+        testing:
+          $ref: "#/components/schemas/TestingConf"
+        database:
+          $ref: "#/components/schemas/DatabaseConf"
+  ##############################################################
+  ###############  Poja Conf 1 #################################
+  ##############################################################
+
+  ##############################################################
+  ###############  Poja Conf 2 #################################
+  ##############################################################
+    DatabaseConf2:
+      type: object
+      properties:
+        with_database:
+          type: string
+          enum:
+            - NONE
+            - SELF_MANAGED_JPA_DATABASE
+
+    GeneralPojaConf2:
+      type: object
+      properties:
+        app_name:
+          type: string
+        with_snapstart:
+          type: boolean
+        package_full_name:
+          type: string
+        custom_java_repositories:
+          type: array
+          items:
+            type: string
+        custom_java_deps:
+          type: array
+          items:
+            type: string
+        custom_java_env_vars:
+          $ref: "#/components/schemas/StringMap"
+
+
+    ComputeConf2:
+      type: object
+      properties:
+        frontal_memory:
+          type: number
+          example: 2048
+        frontal_function_timeout:
+          type: number
+          example: 30
+        frontal_function_invocation_method:
+          type: string
+          enum:
+            - LAMBDA_URL
+            - HTTP_API
+        worker_1_memory:
+          type: number
+          example: 1024
+        worker_2_memory:
+          type: number
+          example: 1024
+        worker_1_batch:
+          type: number
+          example: 5
+        worker_2_batch:
+          type: number
+          example: 5
+        worker_function_1_timeout:
+          type: number
+          example: 600
+        worker_function_2_timeout:
+          type: number
+          example: 600
+        with_queues_nb:
+          $ref: "#/components/schemas/WithQueuesNbEnum"
+        api_gateway_timeout:
+          type: number
+          example: 30
+    ConcurrencyConf2:
+      type: object
+      properties:
+        frontal_reserved_concurrent_executions_nb:
+          type: integer
+          nullable: true
+        worker_1_reserved_concurrent_executions_nb:
+          type: integer
+          nullable: true
+        worker_2_reserved_concurrent_executions_nb:
+          type: integer
+          nullable: true
+    EventStackSource:
+      type: string
+      enum:
+        - EVENT_STACK_1
+        - EVENT_STACK_2
+    ScheduledTask:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        schedule_expression:
+          type: string
+        event_stack_source:
+          $ref: "#/components/schemas/EventStackSource"
+        class_name:
+          type: string
+    PojaConf2:
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/PojaConf"
+      required:
+        - version
+      properties:
+        version:
+          type: string
+        general:
+          $ref: "#/components/schemas/GeneralPojaConf2"
+        integration:
+          $ref: "#/components/schemas/IntegrationConf"
+        gen_api_client:
+          $ref: "#/components/schemas/GenApiClientConf"
+        concurrency:
+          $ref: "#/components/schemas/ConcurrencyConf2"
+        compute:
+          $ref: "#/components/schemas/ComputeConf2"
+        emailing:
+          $ref: "#/components/schemas/MailingConf"
+        testing:
+          $ref: "#/components/schemas/TestingConf"
+        database:
+          $ref: "#/components/schemas/DatabaseConf2"
+        scheduled_tasks:
+          type: array
+          items:
+            $ref: "#/components/schemas/ScheduledTask"
+  ##############################################################
+  #################  Poja Conf 2 ###############################
+  ##############################################################
+
+  ##############################################################
+  #################  Poja Conf 3 ###############################
+  #############################################################
+    PojaConf3:
+        type: object
+        allOf:
+          - $ref: "#/components/schemas/PojaConf"
+        required:
+          - version
+        properties:
+          version:
+            type: string
+          general:
+            $ref: "#/components/schemas/GeneralPojaConf2"
+          integration:
+            $ref: "#/components/schemas/IntegrationConf"
+          gen_api_client:
+            $ref: "#/components/schemas/GenApiClientConf"
+          concurrency:
+            $ref: "#/components/schemas/ConcurrencyConf2"
+          compute:
+            $ref: "#/components/schemas/ComputeConf2"
+          emailing:
+            $ref: "#/components/schemas/MailingConf"
+          testing:
+            $ref: "#/components/schemas/TestingConf"
+          database:
+            $ref: "#/components/schemas/DatabaseConf2"
+          scheduled_tasks:
+            type: array
+            items:
+              $ref: "#/components/schemas/ScheduledTask"
+  ##############################################################
+  #################  Poja Conf 3 ###############################
+  #############################################################
+
+  ##############################################################
+  #################  Poja Conf 4 ###############################
+  #############################################################
+    PojaConf4:
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/PojaConf"
+      required:
+        - version
+      properties:
+        version:
+          type: string
+        general:
+          $ref: "#/components/schemas/GeneralPojaConf2"
+        integration:
+          $ref: "#/components/schemas/IntegrationConf"
+        gen_api_client:
+          $ref: "#/components/schemas/GenApiClientConf"
+        concurrency:
+          $ref: "#/components/schemas/ConcurrencyConf2"
+        compute:
+          $ref: "#/components/schemas/ComputeConf2"
+        emailing:
+          $ref: "#/components/schemas/MailingConf"
+        testing:
+          $ref: "#/components/schemas/TestingConf"
+        database:
+          $ref: "#/components/schemas/DatabaseConf2"
+        scheduled_tasks:
+          type: array
+          items:
+            $ref: "#/components/schemas/ScheduledTask"
+  ##############################################################
+  #################  Poja Conf 4 ###############################
+  #############################################################
+
+  ##############################################################
+  #################  Poja Conf 5 ###############################
+  #############################################################
+    PojaConf5:
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/PojaConf"
+      required:
+        - version
+      properties:
+        version:
+          type: string
+        general:
+          $ref: "#/components/schemas/GeneralPojaConf2"
+        integration:
+          $ref: "#/components/schemas/IntegrationConf"
+        gen_api_client:
+          $ref: "#/components/schemas/GenApiClientConf"
+        concurrency:
+          $ref: "#/components/schemas/ConcurrencyConf2"
+        compute:
+          $ref: "#/components/schemas/ComputeConf2"
+        emailing:
+          $ref: "#/components/schemas/MailingConf"
+        testing:
+          $ref: "#/components/schemas/TestingConf"
+        database:
+          $ref: "#/components/schemas/DatabaseConf2"
+        scheduled_tasks:
+          type: array
+          items:
+            $ref: "#/components/schemas/ScheduledTask"
+  ##############################################################
+  #################  Poja Conf 5 ###############################
+  #############################################################
+
+  ##############################################################
+  #################  Poja Conf 6 ###############################
+  #############################################################
+    EnvVar:
+      type: object
+      properties:
+        name:
+          type: string
+        value:
+          type: string
+        test_value:
+          type: string
+
+    GeneralPojaConf6:
+      type: object
+      properties:
+        app_name:
+          type: string
+        with_snapstart:
+          type: boolean
+        package_full_name:
+          type: string
+        custom_java_repositories:
+          type: array
+          items:
+            type: string
+        custom_java_deps:
+          type: array
+          items:
+            type: string
+        custom_java_env_vars:
+          type: array
+          items:
+            $ref: "#/components/schemas/EnvVar"
+
+    PojaConf6:
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/PojaConf"
+      required:
+        - version
+      properties:
+        version:
+          type: string
+        general:
+          $ref: "#/components/schemas/GeneralPojaConf6"
+        integration:
+          $ref: "#/components/schemas/IntegrationConf"
+        gen_api_client:
+          $ref: "#/components/schemas/GenApiClientConf"
+        concurrency:
+          $ref: "#/components/schemas/ConcurrencyConf2"
+        compute:
+          $ref: "#/components/schemas/ComputeConf2"
+        emailing:
+          $ref: "#/components/schemas/MailingConf"
+        testing:
+          $ref: "#/components/schemas/TestingConf"
+        database:
+          $ref: "#/components/schemas/DatabaseConf2"
+        scheduled_tasks:
+          type: array
+          items:
+            $ref: "#/components/schemas/ScheduledTask"
+  ##############################################################
+  #################  Poja Conf 7 ###############################
+  #############################################################
+    PojaConf7:
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/PojaConf"
+      required:
+        - version
+      properties:
+        version:
+          type: string
+        general:
+          $ref: "#/components/schemas/GeneralPojaConf7"
+        integration:
+          $ref: "#/components/schemas/IntegrationConf"
+        gen_api_client:
+          $ref: "#/components/schemas/GenApiClientConf"
+        concurrency:
+          $ref: "#/components/schemas/ConcurrencyConf2"
+        compute:
+          $ref: "#/components/schemas/ComputeConf2"
+        emailing:
+          $ref: "#/components/schemas/MailingConf"
+        testing:
+          $ref: "#/components/schemas/TestingConf"
+        database:
+          $ref: "#/components/schemas/DatabaseConf2"
+        scheduled_tasks:
+          type: array
+          items:
+            $ref: "#/components/schemas/ScheduledTask"
+
+    GeneralPojaConf7:
+      type: object
+      properties:
+        app_name:
+          type: string
+        with_snapstart:
+          type: boolean
+        java_main_class:
+          type: string
+        package_full_name:
+          type: string
+        custom_java_repositories:
+          type: array
+          items:
+            type: string
+        custom_java_deps:
+          type: array
+          items:
+            type: string
+        custom_java_env_vars:
+          type: array
+          items:
+            $ref: "#/components/schemas/EnvVar"
+
+  ##############################################################
+  #################  Poja Conf 7 ###############################
+  #############################################################
+
+  ##############################################################
+  #################  Poja Conf 8 ###############################
+  #############################################################
+
+    PojaConf8:
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/PojaConf"
+      required:
+        - version
+      properties:
+        version:
+          type: string
+        general:
+          $ref: "#/components/schemas/GeneralPojaConf7"
+        integration:
+          $ref: "#/components/schemas/IntegrationConf"
+        gen_api_client:
+          $ref: "#/components/schemas/GenApiClientConf"
+        concurrency:
+          $ref: "#/components/schemas/ConcurrencyConf2"
+        compute:
+          $ref: "#/components/schemas/ComputeConf2"
+        emailing:
+          $ref: "#/components/schemas/MailingConf"
+        testing:
+          $ref: "#/components/schemas/TestingConf"
+        database:
+          $ref: "#/components/schemas/DatabaseConf2"
+        scheduled_tasks:
+          type: array
+          items:
+            $ref: "#/components/schemas/ScheduledTask"
+
+  ##############################################################
+  #################  Poja Conf 8 ###############################
+  #############################################################
+
+  ##############################################################
+  #################  Poja Conf 9 ###############################
+  #############################################################
+    Worker:
+      type: object
+      properties:
+        memory:
+          type: number
+          example: 1024
+        batch:
+          type: number
+          example: 5
+        timeout:
+          type: number
+          example: 600
+        reserved_concurrent_executions_nb:
+          type: integer
+          nullable: true
+
+    ConcurrencyConf9:
+      type: object
+      properties:
+        frontal_reserved_concurrent_executions_nb:
+          type: integer
+          nullable: true
+
+    ComputeConf9:
+      type: object
+      properties:
+        frontal_memory:
+          type: number
+          example: 2048
+        frontal_function_timeout:
+          type: number
+          example: 30
+        frontal_function_invocation_method:
+          type: string
+          enum:
+            - LAMBDA_URL
+            - HTTP_API
+        api_gateway_timeout:
+          type: number
+          example: 30
+          nullable: true
+        workers:
+          type: array
+          items:
+            $ref: "#/components/schemas/Worker"
+
+    ScheduledTask9:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        schedule_expression:
+          type: string
+        event_stack_source:
+          type: integer
+          minimum: 1
+          maximum: 10
+        class_name:
+          type: string
+
+    PojaConf9:
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/PojaConf"
+      required:
+        - version
+      properties:
+        version:
+          type: string
+        general:
+          $ref: "#/components/schemas/GeneralPojaConf7"
+        integration:
+          $ref: "#/components/schemas/IntegrationConf"
+        gen_api_client:
+          $ref: "#/components/schemas/GenApiClientConf"
+        concurrency:
+          $ref: "#/components/schemas/ConcurrencyConf9"
+        compute:
+          $ref: "#/components/schemas/ComputeConf9"
+        emailing:
+          $ref: "#/components/schemas/MailingConf"
+        testing:
+          $ref: "#/components/schemas/TestingConf"
+        database:
+          $ref: "#/components/schemas/DatabaseConf2"
+        scheduled_tasks:
+          type: array
+          items:
+            $ref: "#/components/schemas/ScheduledTask9"
+
+  ##############################################################
+  #################  Poja Conf 9 ###############################
+  #############################################################
+
+  ##############################################################
+  ###############  Poja Configurations #########################
+  ##############################################################

@@ -1,0 +1,1 @@
+alter table application_template drop column if exists base_config_id;

@@ -1,0 +1,1 @@
+alter table application_template add column if not exists with_custom_config boolean not null default TRUE;

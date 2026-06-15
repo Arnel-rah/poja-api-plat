@@ -1,0 +1,370 @@
+openapi: 3.1.0
+operations:
+  environments:
+    parameters:
+      - $ref: "./api.yml#/components/parameters/orgId"
+      - $ref: "./api.yml#/components/parameters/applicationId"
+    get:
+      security:
+        - bearerAuth: []
+      tags:
+        - Environment
+      operationId: getApplicationEnvironments
+      summary: Get environment list of an application
+      description: list of environments, pagination was omitted because we might not have that many environments for a single app
+      responses:
+        "200":
+          description: list of environments
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvironmentsResponse"
+        "400":
+          $ref: "./api.yml#/components/responses/400"
+        "403":
+          $ref: "./api.yml#/components/responses/403"
+        "404":
+          $ref: "./api.yml#/components/responses/404"
+        "429":
+          $ref: "./api.yml#/components/responses/429"
+        "500":
+          $ref: "./api.yml#/components/responses/500"
+    put:
+      security:
+        - bearerAuth: []
+      tags:
+        - Environment
+      operationId: crupdateApplicationEnvironments
+      summary: Crupdate environments of an application.
+      description: for each environment in the payload, it creates an environment if given id exists, updates it otherwise
+      requestBody:
+        description: >
+          - All application relative properties such as SSM parameters are computed from the environment's application
+          - Resource relative properties are linked to the plan of the Environment and can be set by using a different endpoint for plan upgrade with enum values such as 1024 or 2048 for memory, etc...
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CrupdateEnvironmentsRequestBody"
+        required: true
+      responses:
+        "200":
+          description: The crupdated environments
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CrupdateEnvironmentsResponse"
+        "400":
+          $ref: "./api.yml#/components/responses/400"
+        "403":
+          $ref: "./api.yml#/components/responses/403"
+        "404":
+          $ref: "./api.yml#/components/responses/404"
+        "429":
+          $ref: "./api.yml#/components/responses/429"
+        "500":
+          $ref: "./api.yml#/components/responses/500"
+  environmentsById:
+    parameters:
+      - $ref: "./api.yml#/components/parameters/orgId"
+      - $ref: "./api.yml#/components/parameters/applicationId"
+      - $ref: "./api.yml#/components/parameters/environmentId"
+    get:
+      security:
+        - bearerAuth: []
+      tags:
+        - Environment
+      operationId: getApplicationEnvironmentById
+      summary: Get an environment by its identifier
+      responses:
+        "200":
+          description: the specified environment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Environment"
+        "400":
+          $ref: "./api.yml#/components/responses/400"
+        "403":
+          $ref: "./api.yml#/components/responses/403"
+        "404":
+          $ref: "./api.yml#/components/responses/404"
+        "429":
+          $ref: "./api.yml#/components/responses/429"
+        "500":
+          $ref: "./api.yml#/components/responses/500"
+  environmentStatuses:
+    parameters:
+      - $ref: "./api.yml#/components/parameters/orgId"
+      - $ref: "./api.yml#/components/parameters/applicationId"
+      - $ref: "./api.yml#/components/parameters/environmentId"
+    put:
+      tags:
+        - Environment
+      summary: suspends or activates an environment
+      operationId: updateEnvStatus
+      requestBody:
+        required: true
+        description: action todo
+        content:
+          "application/json":
+            schema:
+              $ref: "#/components/schemas/UpdateEnvStatusRequestBody"
+      responses:
+        "200":
+          description: updated environment with new status if applied
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/Environment"
+        "400":
+          $ref: "./api.yml#/components/responses/400"
+        "404":
+          $ref: "./api.yml#/components/responses/404"
+        "429":
+          $ref: "./api.yml#/components/responses/429"
+        "500":
+          $ref: "./api.yml#/components/responses/500"
+  environmentConfig:
+    parameters:
+      - $ref: "./api.yml#/components/parameters/orgId"
+      - $ref: "./api.yml#/components/parameters/applicationId"
+      - $ref: "./api.yml#/components/parameters/environmentId"
+      - name: configId
+        in: path
+        description: identifier of the config
+        schema:
+          type: string
+        required: true
+    get:
+      security:
+        - bearerAuth: []
+      tags:
+        - Environment
+      operationId: getApplicationEnvironmentConfigById
+      summary: Get specified config of an environment
+      responses:
+        "200":
+          description: the queried config
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvConf"
+        "400":
+          $ref: "./api.yml#/components/responses/400"
+        "403":
+          $ref: "./api.yml#/components/responses/403"
+        "404":
+          $ref: "./api.yml#/components/responses/404"
+        "429":
+          $ref: "./api.yml#/components/responses/429"
+        "500":
+          $ref: "./api.yml#/components/responses/500"
+    put:
+      tags:
+        - Environment
+      operationId: saveApplicationEnvConfig
+      summary: save an application's environment config
+      security:
+        - bearerAuth: []
+      requestBody:
+        description: the config to save
+        content:
+          "application/json":
+            schema:
+              $ref: "#/components/schemas/EnvConf"
+      responses:
+        "200":
+          description: the applied config with its id
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/EnvConf"
+        "400":
+          $ref: "./api.yml#/components/responses/400"
+        "403":
+          $ref: "./api.yml#/components/responses/403"
+        "404":
+          $ref: "./api.yml#/components/responses/404"
+        "429":
+          $ref: "./api.yml#/components/responses/429"
+        "500":
+          $ref: "./api.yml#/components/responses/500"
+  deployEnv:
+    parameters:
+      - $ref: "./api.yml#/components/parameters/orgId"
+      - $ref: "./api.yml#/components/parameters/applicationId"
+      - $ref: "./api.yml#/components/parameters/environmentId"
+    post:
+      tags:
+        - Environment
+      operationId: deployEnv
+      description: deploy env with given conf
+      summary: creates a new deployment with given conf
+      security:
+        - bearerAuth: []
+      requestBody:
+        description: configuration to apply
+        content:
+          "application/json":
+            schema:
+              $ref: "#/components/schemas/DeployEnvRequestBody"
+      responses:
+        "200":
+          description: the created deployment to continue
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/DeployEnvResponse"
+        "400":
+          $ref: "./api.yml#/components/responses/400"
+        "403":
+          $ref: "./api.yml#/components/responses/403"
+        "429":
+          $ref: "./api.yml#/components/responses/429"
+        "500":
+          $ref: "./api.yml#/components/responses/500"
+  saveAppEnvConfAndDeploy:
+    post:
+      tags:
+        - Environment
+      operationId: saveAppEnvConfAndDeploy
+      description: deploy env with given conf obj
+      summary: creates a new deployment with given conf obj
+      security:
+        - bearerAuth: []
+      requestBody:
+        description:
+        content:
+          "application/json":
+            schema:
+              $ref: "#/components/schemas/EnvConf"
+      responses:
+        "200":
+          description: the created deployment
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/DeployEnvResponse"
+        "400":
+          $ref: "./api.yml#/components/responses/400"
+        "403":
+          $ref: "./api.yml#/components/responses/403"
+        "429":
+          $ref: "./api.yml#/components/responses/429"
+        "500":
+          $ref: "./api.yml#/components/responses/500"
+components:
+  parameters:
+    functionName:
+      name: functionName
+      in: path
+      description: The physical resource name of the lambda function
+      schema:
+        type: string
+        example: prod-compute-jcloudify-poja-app-FrontalFunction-rPbLaYfitwSO
+      required: true
+    logGroupName:
+      name: logGroupName
+      in: query
+      description: The physical resource name of the log group
+      schema:
+        type: string
+        example: /aws/lambda/prod-compute-jcloudify-poja-app-FrontalFunction-rPbLaYfitwSO
+      required: true
+    logStreamName:
+      name: logStreamName
+      in: query
+      description: The physical resource name of the log stream
+      schema:
+        type: string
+        example: 2024/01/01/[$LATEST]12345
+      required: true
+  schemas:
+    DeployEnvRequestBody:
+      type: object
+      properties:
+        conf_id:
+          type: string
+    DeployEnvResponse:
+      type: object
+      properties:
+        deployment_id:
+          type: string
+    EnvConf:
+      type: object
+      properties:
+        conf:
+          $ref: "./poja-related-api.yml#/components/schemas/OneOfPojaConf"
+        id:
+          type: string
+    EnvironmentsResponse:
+      type: object
+      allOf:
+        - properties:
+            data:
+              type: array
+              items:
+                $ref: "#/components/schemas/Environment"
+    CrupdateEnvironmentsResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Environment"
+    CrupdateEnvironmentsRequestBody:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/CrupdateEnvironment"
+    EnvironmentType:
+      type: string
+      enum:
+        - PROD
+        - PREPROD
+    Environment:
+      allOf:
+        - $ref: "#/components/schemas/CrupdateEnvironment"
+      type: object
+      properties:
+        active_deployment_uri:
+          type: string
+          format: uri
+        active_conf_id:
+          type: string
+        applied_conf_id:
+          type: string
+        current_conf_id:
+          type: string
+        state:
+          type: string
+          enum:
+            - HEALTHY
+            - UNHEALTHY
+            - UNKNOWN
+        status:
+          type: string
+          enum:
+            - ACTIVE
+            - SUSPENDED
+            - UNDER_MODIFICATION
+    UpdateEnvStatusRequestBody:
+      type: object
+      properties:
+        action:
+          type: string
+          enum:
+            - ACTIVATE
+            - SUSPEND
+    CrupdateEnvironment:
+      type: object
+      properties:
+        id:
+          type: string
+        environment_type:
+          $ref: "#/components/schemas/EnvironmentType"
+        archived:
+          type: boolean
+          default: false

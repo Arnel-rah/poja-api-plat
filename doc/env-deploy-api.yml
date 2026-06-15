@@ -1,0 +1,195 @@
+openapi: 3.1.0
+operations:
+  githubWorkflowState:
+    post:
+      tags:
+        - Env_Deploy
+      summary: Update deployment state about github action script
+      operationId: updateGithubWorkflowState
+      parameters:
+        - name: repo_owner
+          description: github repository owner containing the app
+          schema:
+            type: string
+          required: true
+          in: path
+        - name: repo_name
+          description: github repository name containing the app
+          schema:
+            type: string
+          required: true
+          in: path
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GithubWorkflowState"
+      responses:
+        "200":
+          description: the latest state of the github workflow
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GithubWorkflowStateResponse"
+        "400":
+          $ref: "./api.yml#/components/responses/400"
+        "403":
+          $ref: "./api.yml#/components/responses/403"
+        "404":
+          $ref: "./api.yml#/components/responses/404"
+        "429":
+          $ref: "./api.yml#/components/responses/429"
+        "500":
+          $ref: "./api.yml#/components/responses/500"
+  uploadUri:
+    get:
+      tags:
+        - Env_Deploy
+      summary: creates an URI for zip package build upload
+      operationId: createFileUploadUri
+      parameters:
+        - name: repo_owner
+          description: github repository owner containing the app
+          schema:
+            type: string
+          required: true
+          in: path
+        - name: repo_name
+          description: github repository name containing the app
+          schema:
+            type: string
+          required: true
+          in: path
+        - name: environment_type
+          description: environment type
+          schema:
+            $ref: "./environment-api.yml#/components/schemas/EnvironmentType"
+          required: true
+          in: query
+      responses:
+        "200":
+          description: the presigned code uri
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BuildUploadRequestResponse"
+        "400":
+          $ref: "./api.yml#/components/responses/400"
+        "403":
+          $ref: "./api.yml#/components/responses/403"
+        "404":
+          $ref: "./api.yml#/components/responses/404"
+        "429":
+          $ref: "./api.yml#/components/responses/429"
+        "500":
+          $ref: "./api.yml#/components/responses/500"
+  deploys:
+    put:
+      tags:
+        - Env_Deploy
+      summary: deploys all of the app env stacks
+      operationId: deployEnv
+      parameters:
+        - name: repo_owner
+          description: github repository owner containing the app
+          schema:
+            type: string
+          required: true
+          in: path
+        - name: repo_name
+          description: github repository name containing the app
+          schema:
+            type: string
+          required: true
+          in: path
+        - name: environment_type
+          description: environment type
+          schema:
+            $ref: "./environment-api.yml#/components/schemas/EnvironmentType"
+          required: true
+          in: query
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BuiltEnvInfo"
+      responses:
+        "200":
+          description: OK if the deployment request has no issue
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BuiltEnvInfo"
+        "400":
+          $ref: "./api.yml#/components/responses/400"
+        "403":
+          $ref: "./api.yml#/components/responses/403"
+        "404":
+          $ref: "./api.yml#/components/responses/404"
+        "429":
+          $ref: "./api.yml#/components/responses/429"
+        "500":
+          $ref: "./api.yml#/components/responses/500"
+components:
+  schemas:
+    GithubWorkflowStateEnum:
+      type: string
+      enum:
+        - WORKFLOW_RUNNING
+        - WORKFLOW_FAILED
+    GithubWorkflowState:
+      type: object
+      properties:
+        workflow_run_id:
+          type: string
+        workflow_run_attempt:
+          type: string
+        app_env_deployment_id:
+          type: string
+        commit_sha:
+          type: string
+        commit_message:
+          type: string
+        commit_author_name:
+          type: string
+        status:
+          $ref: "#/components/schemas/GithubWorkflowStateEnum"
+        environment_type:
+          $ref: "./environment-api.yml#/components/schemas/EnvironmentType"
+    GithubWorkflowStateResponse:
+      allOf:
+        - $ref: "#/components/schemas/GithubWorkflowState"
+      type: object
+      properties:
+        app_env_deployment_id:
+          type: string
+    BuiltEnvInfo:
+      type: object
+      properties:
+        formatted_bucket_key:
+          type: string
+        id:
+          type: string
+        environment_type:
+          $ref: "./environment-api.yml#/components/schemas/EnvironmentType"
+        commit_sha:
+          type: string
+        app_env_deployment_id:
+          type: string
+        env_depl_conf_id:
+          type: string
+        tag_name:
+          type: string
+        tag_message:
+          type: string
+    BuildUploadRequestResponse:
+      type: object
+      properties:
+        build_template_file_uri:
+          type: string
+          format: uri
+        uri:
+          type: string
+          format: uri
+        filename:
+          type: string

@@ -1,0 +1,328 @@
+openapi: "3.0.2"
+operations:
+  organizationApplicationImports:
+    parameters:
+      - $ref: "./api.yml#/components/parameters/orgId"
+    get:
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - $ref: "./api.yml#/components/parameters/page"
+        - $ref: "./api.yml#/components/parameters/page_size"
+      tags:
+        - Importer
+      operationId: getOrganizationApplicationImports
+      summary: Get paginated application imports of a identified organization
+      responses:
+        "200":
+          description: Paged list of application imports
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PagedApplicationImportsResponse"
+        "400":
+          $ref: "./api.yml#/components/responses/400"
+        "403":
+          $ref: "./api.yml#/components/responses/403"
+        "404":
+          $ref: "./api.yml#/components/responses/404"
+        "429":
+          $ref: "./api.yml#/components/responses/429"
+        "500":
+          $ref: "./api.yml#/components/responses/500"
+    post:
+      security:
+        - bearerAuth: [ ]
+      tags:
+        - Importer
+      operationId: importApplication
+      summary: Import an existing application
+      requestBody:
+        required: true
+        description: Application to import
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateApplicationImportRequestBody"
+      responses:
+        "200":
+          description: The created application import
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApplicationImport"
+        "400":
+          $ref: "./api.yml#/components/responses/400"
+        "403":
+          $ref: "./api.yml#/components/responses/403"
+        "404":
+          $ref: "./api.yml#/components/responses/404"
+        "429":
+          $ref: "./api.yml#/components/responses/429"
+        "500":
+          $ref: "./api.yml#/components/responses/500"
+
+  organizationApplicationImportById:
+    parameters:
+      - $ref: "./api.yml#/components/parameters/orgId"
+      - $ref: "./api.yml#/components/parameters/importId"
+    get:
+      security:
+        - bearerAuth: [ ]
+      tags:
+        - Importer
+      operationId: getApplicationImportById
+      summary: Get an import by identifier
+      responses:
+        "200":
+          description: The specified application import
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApplicationImport"
+        "400":
+          $ref: "./api.yml#/components/responses/400"
+        "403":
+          $ref: "./api.yml#/components/responses/403"
+        "404":
+          $ref: "./api.yml#/components/responses/404"
+        "429":
+          $ref: "./api.yml#/components/responses/429"
+        "500":
+          $ref: "./api.yml#/components/responses/500"
+
+  organizationApplicationImportStates:
+    parameters:
+      - $ref: "./api.yml#/components/parameters/orgId"
+      - $ref: "./api.yml#/components/parameters/importId"
+    get:
+      security:
+        - bearerAuth: [ ]
+      tags:
+        - Importer
+      operationId: getApplicationImportStates
+      responses:
+        "200":
+          description: The states for the identified import
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetApplicationImportStates"
+        "400":
+          $ref: "./api.yml#/components/responses/400"
+        "403":
+          $ref: "./api.yml#/components/responses/403"
+        "404":
+          $ref: "./api.yml#/components/responses/404"
+        "429":
+          $ref: "./api.yml#/components/responses/429"
+        "500":
+          $ref: "./api.yml#/components/responses/500"
+    post:
+      security:
+        - bearerAuth: [ ]
+      tags:
+        - Importer
+      operationId: updateApplicationImportStates
+      summary: Update application import states based on github workflow outcome
+      requestBody:
+        required: true
+        description: Github workflow outcome
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateApplicationImportStatesRequestBody"
+      responses:
+        "200":
+          description: The updated states
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetApplicationImportStates"
+        "400":
+          $ref: "./api.yml#/components/responses/400"
+        "403":
+          $ref: "./api.yml#/components/responses/403"
+        "404":
+          $ref: "./api.yml#/components/responses/404"
+        "429":
+          $ref: "./api.yml#/components/responses/429"
+        "500":
+          $ref: "./api.yml#/components/responses/500"
+
+components:
+  schemas:
+    CreateApplicationImportRequestBody:
+      type: object
+      properties:
+        id:
+          type: string
+        user_id:
+          type: string
+        name:
+          type: string
+        github_repository:
+          $ref: "./github-app-installation-api.yml#/components/schemas/GithubRepositoryListItem"
+        environment_variables:
+          type: array
+          items:
+            $ref: './poja-related-api.yml#/components/schemas/EnvVar'
+    ApplicationImportStatusEnum:
+      type: string
+      enum:
+        - PENDING
+        - IN_PROGRESS
+        - SUCCESSFUL
+        - FAILED
+    ApplicationImport:
+      properties:
+        id:
+          type: string
+        created_app_id:
+          type: string
+        user_id:
+          type: string
+        org_id:
+          type: string
+        name:
+          type: string
+        poja_version:
+          type: string
+        github_repository_name:
+          type: string
+        github_repository_http_url:
+          type: string
+        github_repository_default_branch:
+          type: string
+        status:
+          $ref: '#/components/schemas/ApplicationImportStatusEnum'
+    GetApplicationImportResponse:
+      allOf:
+        - $ref: "#/components/schemas/ApplicationImport"
+      properties:
+        environment_variables:
+          type: array
+          items:
+            $ref: './poja-related-api.yml#/components/schemas/EnvVar'
+        gh_workflow_runs:
+          type: array
+          items:
+            $ref: "#/components/schemas/GhWorkflowRun"
+    PagedApplicationImportsResponse:
+      type: object
+      allOf:
+        - $ref: "./api.yml#/components/schemas/PagedResponse"
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/ApplicationImport"
+    ApplicationImportState:
+      type: object
+      properties:
+        id:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        progressionStatus:
+          $ref: "#/components/schemas/ApplicationImportStateEnum"
+        executionType:
+          $ref: "./application-api.yml#/components/schemas/ExecutionType"
+        logs:
+          type: array
+          items:
+            $ref: "#/components/schemas/ApplicationImportLog"
+    ApplicationImportLog:
+      type: object
+      properties:
+        content:
+          type: string
+        type:
+          $ref: "#/components/schemas/ApplicationImportLogTypeEnum"
+        timestamp:
+          type: string
+          format: date-time
+    ApplicationImportLogTypeEnum:
+      type: string
+      enum:
+        - INFO
+        - WARNING
+        - ERROR
+    ApplicationImportStateEnum:
+      type: string
+      enum:
+        - APPLICATION_LANGUAGE_VERIFICATION_IN_PROGRESS
+        - APPLICATION_LANGUAGE_VERIFICATION_FAILED
+        - APPLICATION_LANGUAGE_VERIFICATION_SUCCESSFUL
+        - BUILD_TOOL_VERIFICATION_IN_PROGRESS
+        - BUILD_TOOL_VERIFICATION_FAILED
+        - BUILD_TOOL_VERIFICATION_SUCCESSFUL
+        - PRE_TRANSFORMATION_TEST_RUN_VERIFICATION_IN_PROGRESS
+        - PRE_TRANSFORMATION_TEST_RUN_VERIFICATION_SUCCESSFUL
+        - PRE_TRANSFORMATION_TEST_RUN_VERIFICATION_FAILED
+        - CONVERSION_TO_GRADLE_IN_PROGRESS
+        - CONVERSION_TO_GRADLE_FAILED
+        - CONVERSION_TO_GRADLE_SUCCESSFUL
+        - GRADLE_BUILD_FILE_CONFLICTS_RESOLUTION_IN_PROGRESS
+        - GRADLE_BUILD_FILE_CONFLICTS_RESOLUTION_FAILED
+        - GRADLE_BUILD_FILE_CONFLICTS_RESOLVED
+        - POJA_CONF_GENERATION_IN_PROGRESS
+        - POJA_CONF_GENERATED
+        - POJA_CONF_GENERATION_FAILED
+        - CODE_GENERATION_IN_PROGRESS
+        - GENERATED_CODE_INTEGRATION_IN_PROGRESS
+        - GENERATED_CODE_INTEGRATION_FAILED
+        - GENERATED_CODE_INTEGRATED
+        - CODE_FORMATTING_IN_PROGRESS
+        - CODE_FORMATTING_FAILED
+        - CODE_FORMATTING_SUCCESSFUL
+        - POST_TRANSFORMATION_TEST_RUN_VERIFICATION_IN_PROGRESS
+        - POST_TRANSFORMATION_TEST_RUN_VERIFICATION_SUCCESSFUL
+        - POST_TRANSFORMATION_TEST_RUN_VERIFICATION_FAILED
+        - TEST_PING_ENDPOINT_IN_PROGRESS
+        - TEST_PING_ENDPOINT_FAILED
+        - TEST_PING_ENDPOINT_SUCCESSFUL
+        - APPLICATION_SET_UP_IN_PROGRESS
+        - APPLICATION_SET_UP_FAILED
+        - APPLICATION_SET_UP_SUCCESSFUL
+    GetApplicationImportStates:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/ApplicationImportState"
+    GhWorkflowJobStatus:
+      type: string
+      enum:
+        - SUCCESS
+        - FAILURE
+    GhWorkflowJobName:
+      type: string
+      enum:
+        - PRE_TRANSFORMATION_TEST
+        - POST_TRANSFORMATION_TEST
+        - POST_TRANSFORMATION_PING_TEST
+    GhWorkflowRun:
+      type: object
+      properties:
+        job_name:
+          $ref: "#/components/schemas/GhWorkflowJobName"
+        url:
+          type: string
+    UpdateApplicationImportStatesRequestBody:
+      type: object
+      properties:
+        job_name:
+          $ref: "#/components/schemas/GhWorkflowJobName"
+        job_status:
+          $ref: "#/components/schemas/GhWorkflowJobStatus"
+        run_id:
+          type: string
+        attempt_nb:
+          type: number
+        repo_owner:
+          type: string
+        repo_name:
+          type: string

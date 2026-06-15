@@ -1,0 +1,1 @@
+alter table if exists "compute_stack_resource_worker_function_names" add column if not exists worker_function_reserved_concurrency integer;

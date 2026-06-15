@@ -1,0 +1,87 @@
+openapi: 3.1.0
+operations:
+  userCost:
+    parameters:
+      - $ref: "./api.yml#/components/parameters/userId"
+      - $ref: "./api.yml#/components/parameters/year"
+      - $ref: "./api.yml#/components/parameters/month"
+    get:
+      security:
+        - bearerAuth: []
+      tags:
+        - Cost
+      operationId: getUserCost
+      summary: Get cost of a user
+      description: >
+      responses:
+        "200":
+          description: cost of a user for the provided period
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/UserCost"
+        "400":
+          $ref: "./api.yml#/components/responses/400"
+        "403":
+          $ref: "./api.yml#/components/responses/403"
+        "404":
+          $ref: "./api.yml#/components/responses/404"
+        "429":
+          $ref: "./api.yml#/components/responses/429"
+        "500":
+          $ref: "./api.yml#/components/responses/500"
+  totalCost:
+    parameters:
+      - $ref: "./api.yml#/components/parameters/year"
+      - $ref: "./api.yml#/components/parameters/month"
+    get:
+      security:
+        - bearerAuth: [ ]
+      tags:
+        - Cost
+      operationId: getTotalCost
+      summary: Get total of all user cost
+      description: >
+      responses:
+        "200":
+          description: Total cost of all users for the provided period
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/Cost"
+        "400":
+          $ref: "./api.yml#/components/responses/400"
+        "403":
+          $ref: "./api.yml#/components/responses/403"
+        "404":
+          $ref: "./api.yml#/components/responses/404"
+        "429":
+          $ref: "./api.yml#/components/responses/429"
+        "500":
+          $ref: "./api.yml#/components/responses/500"
+
+components:
+  schemas:
+    Cost:
+      type: object
+      properties:
+        amount:
+          type: number
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+        updated_at:
+          type: string
+          format: date-time
+    UserCost:
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/Cost"
+      properties:
+        id:
+          type: string
+        user_id:
+          type: string

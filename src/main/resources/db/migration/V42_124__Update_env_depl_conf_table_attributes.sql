@@ -1,0 +1,1 @@
+alter table if exists "env_deployment_conf" add column if not exists "event_scheduler_stack_file_key" varchar;

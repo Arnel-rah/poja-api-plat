@@ -1,0 +1,1 @@
+alter type "app_import_gha_run_job_name" add value if not exists 'POST_TRANSFORMATION_PING_TEST';

@@ -1,0 +1,10 @@
+alter table if exists billing_info
+    rename column computed_price_in_usd to computed_price;
+alter table if exists invoice
+    rename column amount_in_usd to amount;
+alter table if exists offer
+    rename column price_in_usd to price;
+alter table if exists user_billing_discount
+    rename column amount_in_usd to amount;
+alter table if exists user_cost
+    rename column amount_usd to amount;

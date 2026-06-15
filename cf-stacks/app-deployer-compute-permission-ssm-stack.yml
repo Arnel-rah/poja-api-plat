@@ -1,0 +1,16 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: poja-app-deployer - Compute permission SSM parameter
+
+Parameters:
+  Env:
+    Type: String
+  TargetAccountId:
+    Type: String
+
+Resources:
+  ExecutionRoleArnSSM:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Join [ '',[ /poja-app-deployer-plat-10f4a86e/ , !Ref Env , /target-account/execution/role-arn ] ]
+      Type: String
+      Value: !Join [ '',[ "arn:aws:iam::" , !Ref TargetAccountId , ":role/poja-app-deployer-plat-10f4a86e-", !Ref Env ,-ExecutionRole ] ]

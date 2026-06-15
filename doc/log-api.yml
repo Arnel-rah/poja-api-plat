@@ -1,0 +1,222 @@
+openapi: 3.1.0
+operations:
+  envLogByFunction:
+    parameters:
+      - $ref: "./api.yml#/components/parameters/orgId"
+      - $ref: "./api.yml#/components/parameters/applicationId"
+      - $ref: "./api.yml#/components/parameters/environmentId"
+      - name: functionName
+        in: path
+        description: The identifier of the function you'd like to get the log for
+        schema:
+          type: string
+        required: true
+    get:
+      security:
+        - bearerAuth: []
+      tags:
+        - Logs
+      operationId: getEnvFunctionLogByFunction
+      summary: Get the identified env log
+      responses:
+        "200":
+          description: The relate stack log
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvFunctionLog"
+        "400":
+          $ref: "./api.yml#/components/responses/400"
+        "403":
+          $ref: "./api.yml#/components/responses/403"
+        "404":
+          $ref: "./api.yml#/components/responses/404"
+        "429":
+          $ref: "./api.yml#/components/responses/429"
+        "500":
+          $ref: "./api.yml#/components/responses/500"
+  readLogQuery:
+    parameters:
+      - $ref: "./api.yml#/components/parameters/orgId"
+      - $ref: "./api.yml#/components/parameters/applicationId"
+    get:
+      security:
+        - bearerAuth: []
+      tags:
+        - Logs
+      operationId: getLogQuery
+      parameters:
+        - name: logQueryId
+          in: path
+          description: The identifier of the log
+          schema:
+            type: string
+          required: true
+        - $ref: "./api.yml#/components/parameters/page"
+        - $ref: "./api.yml#/components/parameters/page_size"
+        - name: env_types
+          in: query
+          description: envs to query from, will only work if you queried with multiple envs before
+          schema:
+            type: array
+            items:
+              $ref: "./environment-api.yml#/components/schemas/EnvironmentType"
+        - name: function_types
+          in: query
+          description: function type to query from, will only work if you queried with function types before
+          schema:
+            type: array
+            items:
+              $ref: "#/components/schemas/FunctionType"
+      summary: Get the identified log query
+      responses:
+        "200":
+          description: The queried log
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PagedLogQuery"
+        "400":
+          $ref: "./api.yml#/components/responses/400"
+        "403":
+          $ref: "./api.yml#/components/responses/403"
+        "404":
+          $ref: "./api.yml#/components/responses/404"
+        "429":
+          $ref: "./api.yml#/components/responses/429"
+        "500":
+          $ref: "./api.yml#/components/responses/500"
+  createLogQuery:
+    parameters:
+      - $ref: "./api.yml#/components/parameters/orgId"
+      - $ref: "./api.yml#/components/parameters/applicationId"
+    post:
+      security:
+        - bearerAuth: []
+      tags:
+        - Logs
+      operationId: createLogQuery
+      summary: creates new logquery with filters
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateLogQueryRequestBody"
+      responses:
+        "200":
+          description: The created log
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateLogQueryResponse"
+        "400":
+          $ref: "./api.yml#/components/responses/400"
+        "403":
+          $ref: "./api.yml#/components/responses/403"
+        "404":
+          $ref: "./api.yml#/components/responses/404"
+        "429":
+          $ref: "./api.yml#/components/responses/429"
+        "500":
+          $ref: "./api.yml#/components/responses/500"
+components:
+  schemas:
+    EnvFunctionLog:
+      type: object
+      properties:
+        name:
+          type: string
+        link:
+          type: string
+          format: URI
+        creation_datetime:
+          type: string
+          format: date-time
+    LogQueryStatus:
+      type: string
+      enum:
+        - PENDING
+        - RUNNING
+        - COMPLETED
+        - FAILED
+        - CANCELLED
+        - TIMED_OUT
+        - UNKNOWN
+    LogQueryResult:
+      type: object
+      properties:
+        source_function_type:
+          $ref: "#/components/schemas/FunctionType"
+        source_env_type:
+          $ref: "./environment-api.yml#/components/schemas/EnvironmentType"
+        timestamp:
+          type: string
+          format: date-time
+        matching_log_content:
+          type: string
+        log_uri:
+          type: string
+          format: uri
+    SortDirection:
+      type: string
+      enum:
+        - ASC
+        - DESC
+    FunctionType:
+      type: string
+      enum:
+        - FRONTAL
+        - WORKER
+    CreateLogQueryRequestBody:
+      type: object
+      properties:
+        filter_keywords:
+          type: array
+          items:
+            type: string
+        filter_from:
+          type: string
+          format: date-time
+        filter_to:
+          type: string
+          format: date-time
+        timestamp_sort_direction:
+          $ref: "#/components/schemas/SortDirection"
+        env_types:
+          type: array
+          items:
+            $ref: "./environment-api.yml#/components/schemas/EnvironmentType"
+        function_types:
+          type: array
+          items:
+            $ref: "#/components/schemas/FunctionType"
+    CreateLogQueryResponse:
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/CreateLogQueryRequestBody"
+      properties:
+        id:
+          type: string
+    PagedLogQueryResults:
+      allOf:
+        - $ref: "./api.yml#/components/schemas/PagedResponse"
+        - properties:
+            data:
+              type: array
+              items:
+                $ref: "#/components/schemas/LogQueryResult"
+    PagedLogQuery:
+      type: object
+      properties:
+        id:
+          type: string
+        filter_keywords:
+          type: array
+          items:
+            type: string
+        query_status:
+          $ref: "#/components/schemas/LogQueryStatus"
+        has_results:
+          type: boolean
+        results:
+          $ref: "#/components/schemas/PagedLogQueryResults"

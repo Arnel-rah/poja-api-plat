@@ -1,0 +1,59 @@
+name: CD storage bucket
+
+on:
+  push:
+    branches:
+      - 'prod'
+      - 'preprod'
+
+  workflow_dispatch:
+
+jobs:
+  cd-storage:
+    if: github.ref_name == 'prod' || github.ref_name == 'preprod'
+
+    runs-on: ubuntu-latest
+
+    timeout-minutes: 20
+
+    env:
+      AWS_REGION: eu-west-3
+
+    steps:
+      - uses: actions/checkout@v4.1.6
+
+      - uses: hei-school/aws-credentials-setter@v1.0.3
+        with:
+          secrets: ${{ toJSON(secrets) }}
+          region: ${{ env.AWS_REGION }}
+
+      - name: Deploy bucket stack
+        uses: aws-actions/aws-cloudformation-github-deploy@v1
+        with:
+          name: ${{ github.ref_name }}-bucket-poja-plat-10f4a86e-api
+          template: cf-stacks/storage-bucket-stack.yml
+          tags: "[ { \"Key\": \"app\", \"Value\": \"poja-plat-10f4a86e-api\" }, { \"Key\": \"env\", \"Value\": \"${{ github.ref_name }}\" }, { \"Key\": \"user:poja\", \"Value\": \"poja-plat-10f4a86e-api\" }, { \"Key\": \"platform:instanceid\", \"Value\": \"10f4a86e-d075-4eb2-9611-d1a69bb4ec53\" }, { \"Key\": \"platform:instancename\", \"Value\": \"projet-1\" }, { \"Key\": \"platform:customerid\", \"Value\": \"898ebaca-2db4-4849-b4dd-ac29b7180e01\" }, { \"Key\": \"platform:subscriptionid\", \"Value\": \"838785b5-1c63-4a3c-8cd4-9d461d95cdb8\" } ]"
+          capabilities: CAPABILITY_NAMED_IAM
+          no-fail-on-empty-changeset: "1"
+          parameter-overrides:
+            "Env=${{ github.ref_name }}"
+
+      - name: Copy file to bucket
+        run: |
+          SOURCE_BUCKET=$(aws cloudformation describe-stack-resource \
+            --stack-name preprod-bucket-poja-api \
+            --logical-resource-id Bucket \
+            --query "StackResourceDetail.PhysicalResourceId" \
+            --output text)
+
+          TARGET_BUCKET=$(aws cloudformation describe-stack-resource \
+            --stack-name ${{ github.ref_name }}-bucket-poja-plat-10f4a86e-api \
+            --logical-resource-id Bucket \
+            --query "StackResourceDetail.PhysicalResourceId" \
+            --output text)
+          if aws s3api head-object --bucket $TARGET_BUCKET --key app.pem 2>/dev/null; then
+            echo "app.pem already exists in target bucket s3://$TARGET_BUCKET — skipping copy"
+          else
+            aws s3 cp s3://$SOURCE_BUCKET/app.pem s3://$TARGET_BUCKET/app.pem
+          fi
+    

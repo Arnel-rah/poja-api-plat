@@ -1,0 +1,1 @@
+alter table if exists "user" add column if not exists status_updated_at timestamp without time zone;

@@ -1,0 +1,3 @@
+alter type "application_import_state_status" add value 'POST_TRANSFORMATION_TEST_RUN_VERIFICATION_IN_PROGRESS';
+alter type "application_import_state_status" add value 'POST_TRANSFORMATION_TEST_RUN_VERIFICATION_FAILED';
+alter type "application_import_state_status" add value 'POST_TRANSFORMATION_TEST_RUN_VERIFICATION_SUCCESSFUL';

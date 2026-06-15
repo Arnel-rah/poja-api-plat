@@ -1,0 +1,77 @@
+name: CD App Deployer Compute Permission
+
+on:
+  workflow_run:
+    workflows:
+      - "CD compute permission"
+    types:
+      - completed
+    branches:
+      - 'prod'
+      - 'preprod'
+  workflow_dispatch:
+
+jobs:
+  cd-permission:
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       (github.event.workflow_run.head_branch == 'prod' ||
+        github.event.workflow_run.head_branch == 'preprod'))
+
+    runs-on: ubuntu-latest
+
+    timeout-minutes: 20
+
+    env:
+      AWS_REGION: eu-west-3
+      HOME_AWS_ACCOUNT_ID: ${{ github.ref_name == 'prod' && vars.PROD_HOME_AWS_ACCOUNT_ID || vars.PREPROD_HOME_AWS_ACCOUNT_ID }}
+      TARGET_AWS_ACCOUNT_ID: ${{ github.ref_name == 'prod' && vars.PROD_TARGET_AWS_ACCOUNT_ID || vars.PREPROD_TARGET_AWS_ACCOUNT_ID }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.1.6
+        with:
+          ref: ${{ github.event.workflow_run.head_branch || github.ref }}
+      - name: Configure preprod target account AWS credentials
+        if: ${{ github.ref_name == 'preprod' }}
+        uses: aws-actions/configure-aws-credentials@v4.0.1
+        with:
+          aws-access-key-id: ${{ secrets.PREPROD_TARGET_ACCOUNT_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.PREPROD_TARGET_ACCOUNT_AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+        
+      - name: Configure prod target account AWS credentials
+        if: ${{ github.ref_name == 'prod' }}
+        uses: aws-actions/configure-aws-credentials@v4.0.1
+        with:
+          aws-access-key-id: ${{ secrets.PROD_TARGET_ACCOUNT_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.PROD_TARGET_ACCOUNT_AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Deploy permission stack
+        uses: aws-actions/aws-cloudformation-github-deploy@v1
+        with:
+          name: ${{ github.event.workflow_run.head_branch || github.ref_name }}-app-deployer-permission-poja-api-plat-10f4a86e
+          template: cf-stacks/app-deployer-compute-permission-stack.yml
+          tags: "[ { \"Key\": \"app\", \"Value\": \"poja-plat-10f4a86e-api\" }, { \"Key\": \"env\", \"Value\": \"${{ github.event.workflow_run.head_branch || github.ref_name }}\" }, { \"Key\": \"user:poja\", \"Value\": \"poja-plat-10f4a86e-api\" }, { \"Key\": \"platform:instanceid\", \"Value\": \"10f4a86e-d075-4eb2-9611-d1a69bb4ec53\" }, { \"Key\": \"platform:instancename\", \"Value\": \"projet-1\" }, { \"Key\": \"platform:customerid\", \"Value\": \"898ebaca-2db4-4849-b4dd-ac29b7180e01\" }, { \"Key\": \"platform:subscriptionid\", \"Value\": \"838785b5-1c63-4a3c-8cd4-9d461d95cdb8\" } ]"
+          capabilities: CAPABILITY_NAMED_IAM
+          no-fail-on-empty-changeset: "1"
+          parameter-overrides:
+            "Env=${{ github.event.workflow_run.head_branch || github.ref_name }},TrustedAccountId=${{ env.HOME_AWS_ACCOUNT_ID }}"
+    
+      - uses: hei-school/aws-credentials-setter@v1.0.3
+        with:
+          secrets: ${{ toJSON(secrets) }}
+          region: ${{ env.AWS_REGION }}
+    
+      - name: Create home account ssm parameter
+        uses: aws-actions/aws-cloudformation-github-deploy@v1
+        with:
+          name: ${{ github.event.workflow_run.head_branch || github.ref_name }}-app-deployer-permission-ssm-poja-api-plat-10f4a86e
+          template: cf-stacks/app-deployer-compute-permission-ssm-stack.yml
+          tags: "[ { \"Key\": \"app\", \"Value\": \"poja-plat-10f4a86e-api\" }, { \"Key\": \"env\", \"Value\": \"${{ github.event.workflow_run.head_branch || github.ref_name }}\" }, { \"Key\": \"user:poja\", \"Value\": \"poja-plat-10f4a86e-api\" }, { \"Key\": \"platform:instanceid\", \"Value\": \"10f4a86e-d075-4eb2-9611-d1a69bb4ec53\" }, { \"Key\": \"platform:instancename\", \"Value\": \"projet-1\" }, { \"Key\": \"platform:customerid\", \"Value\": \"898ebaca-2db4-4849-b4dd-ac29b7180e01\" }, { \"Key\": \"platform:subscriptionid\", \"Value\": \"838785b5-1c63-4a3c-8cd4-9d461d95cdb8\" } ]"
+          capabilities: CAPABILITY_NAMED_IAM
+          no-fail-on-empty-changeset: "1"
+          parameter-overrides:
+            "Env=${{ github.event.workflow_run.head_branch || github.ref_name }},TargetAccountId=${{ env.TARGET_AWS_ACCOUNT_ID }}"

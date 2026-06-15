@@ -1,0 +1,154 @@
+name: CD compute
+
+on:
+  workflow_run:
+    workflows:
+      - "CD App Deployer Compute Permission"
+    types:
+      - completed
+    branches:
+      - 'prod'
+      - 'preprod'
+  workflow_dispatch:
+    inputs:
+      run_tests:
+        type: choice
+        required: false
+        default: 'yes'
+        description: Run tests?
+        options:
+          - 'yes'
+          - 'no'
+
+  workflow_call:
+
+jobs:
+  deploy-api:
+    if: ${{ github.ref_name == 'prod' || github.ref_name == 'preprod' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    env:
+      AWS_REGION: eu-west-3
+      
+
+    steps:
+      - uses: actions/checkout@v4.1.6
+        with:
+          lfs: ${{ github.event.inputs.run_tests != 'no' }}
+
+      - uses: actions/setup-java@v4.2.1
+        with:
+          java-version: '21'
+          distribution: 'corretto'
+
+      - uses: hei-school/aws-credentials-setter@v1.0.3
+        with:
+          secrets: ${{ toJSON(secrets) }}
+          region: ${{ env.AWS_REGION }}
+
+      - name: Disable tests
+        if: ${{ github.event.inputs.run_tests == 'no' }}
+        run: |
+          printf "tasks.named('test').configure {\n    enabled = false\n}" >> build.gradle
+
+      - run: sam build
+
+    
+      - name: Run Flyway migrations
+        env:
+            DB_URL: ${{ github.ref_name == 'prod' && secrets.PROD_DB_URL || secrets.PREPROD_DB_URL }}
+            DB_USER: ${{ github.ref_name == 'prod' && secrets.PROD_DB_USER || secrets.PREPROD_DB_USER }}
+            DB_PASSWORD: ${{ github.ref_name == 'prod' && secrets.PROD_DB_PASSWORD || secrets.PREPROD_DB_PASSWORD }}
+        run: |
+            wget -qO- https://repo1.maven.org/maven2/org/flywaydb/flyway-commandline/9.22.3/flyway-commandline-9.22.3-linux-x64.tar.gz | tar xz
+            ./flyway-9.22.3/flyway \
+            -url="${DB_URL}" \
+            -user="${DB_USER}" \
+            -password="${DB_PASSWORD}" \
+            -locations="filesystem:src/main/resources/db/migration" \
+            migrate
+      - name: Deploy application
+        run: sam deploy --no-confirm-changeset --no-fail-on-empty-changeset --stack-name ${{ github.event.workflow_run.head_branch || github.ref_name }}-compute-poja-plat-10f4a86e-api --capabilities CAPABILITY_IAM --parameter-overrides Env=${{ github.event.workflow_run.head_branch || github.ref_name }} --resolve-s3 --tags platform:instanceid=10f4a86e-d075-4eb2-9611-d1a69bb4ec53 platform:instancename=projet-1 platform:customerid=898ebaca-2db4-4849-b4dd-ac29b7180e01 platform:subscriptionid=838785b5-1c63-4a3c-8cd4-9d461d95cdb8 app=poja-plat-10f4a86e-api env=${{ github.event.workflow_run.head_branch || github.ref_name }} user:poja=poja-plat-10f4a86e-api
+
+      - name: Trigger FINALIZE_POJA_API_CONFIGURATION step
+        env:
+          EVENT_BUS_NAME: ${{ secrets.EVENT_BUS_NAME }}
+        run: |
+          DETAIL=$(jq -cn \
+            --arg deployment_id "0312f41a-0f31-47f9-9875-60b0bf49e14b" \
+            --arg step_status "FINALIZE_POJA_API_CONFIGURATION_SUCCESS" \
+            --arg project_name "plat-10f4a86e" \
+            '{
+              "deployment_id": $deployment_id,
+              "step_status": $step_status,
+              "next_step_params": {
+                "project_name": $project_name
+              },
+              "message": "Poja api configuration finalized."
+            }')
+          aws events put-events \
+            --region "${{ env.AWS_REGION }}" \
+            --entries "[{
+              \"Source\": \"api.poja.io.event1\",
+              \"DetailType\": \"api.poja.io.endpoint.event.model.PlatformInstanceDeploymentStepCompleted\",
+              \"Detail\": $(echo "$DETAIL" | jq -Rs .),
+              \"EventBusName\": \"$EVENT_BUS_NAME\"
+            }]"
+          echo "Event sent to report FINALIZE_POJA_API_CONFIGURATION_SUCCESS."
+
+
+      - name: Extract frontal URL and trigger SETUP_POJA_BUCKET step
+        env:
+          EVENT_BUS_NAME: ${{ secrets.EVENT_BUS_NAME }}
+        run: |
+          POJA_API_FRONTAL_URL=$(aws cloudformation describe-stacks \
+            --stack-name ${{ github.event.workflow_run.head_branch || github.ref_name }}-compute-poja-plat-10f4a86e-api \
+            --region ${{ env.AWS_REGION }} \
+            --query "Stacks[0].Outputs[?OutputKey=='ApiUrl'].OutputValue" \
+            --output text)
+
+          if [ -z "$POJA_API_FRONTAL_URL" ]; then
+            echo "Failed to extract ApiUrl from stack outputs"
+            exit 1
+          fi
+
+          echo "Frontal URL: $POJA_API_FRONTAL_URL"
+
+          DETAIL=$(jq -cn \
+            --arg deployment_id "0312f41a-0f31-47f9-9875-60b0bf49e14b" \
+            --arg step_status "SETUP_POJA_API_SUCCESS" \
+            --arg project_name "plat-10f4a86e" \
+            --arg poja_api_frontal_url "$POJA_API_FRONTAL_URL" \
+            --arg poja_api_repo_url "https://github.com/poja-app/poja-api-plat-10f4a86e" \
+            --arg poja_cli_repo_url "https://github.com/poja-app/poja-cli-plat-10f4a86e" \
+            --arg python_code_artifact_repository "python-store-poja-idp-plat-10f4a86e" \
+            '{
+              "deployment_id": $deployment_id,
+              "step_status": $step_status,
+              "next_step_params": {
+                "project_name": $project_name,
+                "poja_api_frontal_url": $poja_api_frontal_url,
+                "poja_api_repo_url": $poja_api_repo_url,
+                "poja_cli_repo_url": $poja_cli_repo_url,
+                "python_code_artifact_repository": $python_code_artifact_repository
+              },
+              "message": "Poja api setup completed."
+            }')
+          aws events put-events \
+            --region "${{ env.AWS_REGION }}" \
+            --entries "[{
+              \"Source\": \"api.poja.io.event1\",
+              \"DetailType\": \"api.poja.io.endpoint.event.model.PlatformInstanceDeploymentStepCompleted\",
+              \"Detail\": $(echo "$DETAIL" | jq -Rs .),
+              \"EventBusName\": \"$EVENT_BUS_NAME\"
+            }]"
+
+          echo "Event sent to trigger SETUP_POJA_BUCKET step."
+
+
+  health-check-infra:
+    needs: [deploy-api]
+    if: ${{ needs.deploy-api.result == 'success' && (github.ref_name == 'prod' || github.ref_name == 'preprod') }}
+    uses: ./.github/workflows/health-check-infra.yml
+    secrets: inherit

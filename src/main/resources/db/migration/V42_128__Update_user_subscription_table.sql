@@ -1,0 +1,1 @@
+alter table "user_subscription" add column will_renew boolean not null default true;

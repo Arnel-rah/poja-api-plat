@@ -1,0 +1,105 @@
+name: poja-changelog-uploader.yml
+
+on:
+  push:
+    branches: [prod, preprod]
+  workflow_dispatch:
+    inputs:
+      poja_version:
+        description: "Poja version (example: 3.2.0)"
+        required: true
+        type: string
+      poja_changelog:
+        description: "Poja changelog (markdown)"
+        required: true
+        type: string
+
+env:
+  TOKEN: ${{ secrets.POJA_CI_ACCESS_GH_TOKEN }}
+  API_URL: ${{ github.ref_name == 'prod' && vars.PROD_API_URL || vars.PREPROD_API_URL }}
+
+jobs:
+  collect-poja-version-info:
+    runs-on: ubuntu-latest
+    outputs:
+      poja_version: ${{ steps.set.outputs.poja_version }}
+      poja_changelog: ${{ steps.set.outputs.poja_changelog }}
+      is_poja: ${{ steps.set.outputs.is_poja }}
+
+    steps:
+      - uses: actions/checkout@v4
+        if: github.event_name == 'push'
+
+      - name: Resolve version and changelog
+        id: set
+        run: |
+
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "poja_version=${{ inputs.poja_version }}" >> $GITHUB_OUTPUT
+
+            echo "poja_changelog<<EOF" >> $GITHUB_OUTPUT
+            echo "${{ inputs.poja_changelog }}" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+
+            echo "is_poja=true" >> $GITHUB_OUTPUT
+
+          else
+            FULL=$(git log -1 --pretty=%B)
+            SUBJECT=$(echo "$FULL" | head -n1)
+
+            POJA_CHANGELOG=$(echo "$FULL" | sed '1d;s/^[[:space:]]*//;s/[[:space:]]*$//')
+
+            if [[ "$SUBJECT" =~ \[poja[[:space:]]([0-9]+\.[0-9]+\.[0-9]+)\] ]]; then
+              POJA_VERSION="${BASH_REMATCH[1]}"
+              IS_POJA=true
+            else
+              POJA_VERSION=""
+              IS_POJA=false
+            fi
+
+            echo "poja_version=$POJA_VERSION" >> $GITHUB_OUTPUT
+
+            echo "poja_changelog<<EOF" >> $GITHUB_OUTPUT
+            echo "$POJA_CHANGELOG" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+
+            echo "is_poja=$IS_POJA" >> $GITHUB_OUTPUT
+          fi
+
+  upload-poja-changelog:
+    runs-on: ubuntu-latest
+    needs: collect-poja-version-info
+    if: needs.collect-poja-version-info.outputs.is_poja == 'true'
+
+    steps:
+      - name: Upload changelog to API
+        run: |
+          poja_version="${{ needs.collect-poja-version-info.outputs.poja_version }}"
+          poja_changelog="${{ needs.collect-poja-version-info.outputs.poja_changelog }}"
+
+          curl --fail -X PUT \
+            "${API_URL}/poja-versions/${poja_version}/changelog" \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $TOKEN" \
+            -H "User-Agent: GitHubActions" \
+            -d "$(jq -n \
+                  --arg changelog_md "$poja_changelog" \
+                  '{ changelog_md: $changelog_md }')"
+
+      - name: Upload changelog to Github
+        if: github.ref_name == 'prod'
+        run: |
+          poja_version="${{ needs.collect-poja-version-info.outputs.poja_version }}"
+          poja_changelog="${{ needs.collect-poja-version-info.outputs.poja_changelog }}"
+
+          git config --global user.name "poja-ci"
+          git config --global user.email "jcloudify@mail.hei.school"
+
+          git clone https://poja-ci:${TOKEN}@github.com/poja-app/poja-conf-changelog.git
+          cd poja-conf-changelog
+
+          echo -e "$poja_changelog" > "$poja_version.md"
+
+          git add "$poja_version.md"
+          git commit -m "Add changelog for Poja version $poja_version" || echo "No changes"
+          git push origin main

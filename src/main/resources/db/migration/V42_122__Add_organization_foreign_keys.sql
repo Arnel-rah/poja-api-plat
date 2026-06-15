@@ -1,0 +1,10 @@
+alter table if exists console_user_group add constraint fk_console_user_group_org foreign key(org_id) references organization("id");
+create index if not exists console_user_group_org_idx on console_user_group(org_id);
+alter table if exists app_installation add constraint fk_app_installation_org foreign key(org_id) references organization("id");
+create index if not exists env_build_request on env_build_request(org_id);
+alter table if exists env_build_request add constraint fk_env_build_request_org foreign key(org_id) references organization("id");
+create index if not exists env_build_request on env_build_request(org_id);
+alter table if exists "user" add constraint fk_user_main_org foreign key(main_org_id) references organization("id");
+create index if not exists user_main_org_idx on "user"(main_org_id);
+alter table if exists user_app_log_query add constraint fk_user_app_log_query_org foreign key(org_id) references organization("id");
+create index if not exists user_app_log_query_org_idx on "user_app_log_query"(org_id);

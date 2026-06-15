@@ -1,0 +1,24 @@
+insert into organization_invite(id, inviter_org, status, invited_user) VALUES ('invite_1_id', 'org_1_id', 'ACCEPTED', 'joe-doe-id');
+insert into organization_invite(id, inviter_org, status, invited_user) VALUES ('invite_2_id', 'org_2_id', 'ACCEPTED', 'jane_doe_id');
+insert into organization_invite(id, inviter_org, status, invited_user) VALUES ('invite_3_id', 'org_1_id', 'ACCEPTED', 'jane_doe_id');
+insert into organization_invite(id, inviter_org, status, invited_user) VALUES ('invite_4_id', 'org_3_id', 'ACCEPTED', 'joe-doe-id');
+insert into organization_invite(id, inviter_org, status, invited_user) VALUES ('invite_18_id', 'org_1_id', 'ACCEPTED', 'denis_ritchie_id');
+insert into organization_invite(id, inviter_org, status, invited_user) VALUES ('invite_19_id', 'org_1_id', 'PENDING', 'noobie_id');
+insert into organization_invite(id, inviter_org, status, invited_user, creation_datetime) VALUES ('invite_5_id', 'org_3_id', 'PENDING', 'jane_doe_id', '2025-02-20T00:00:00.00Z');
+insert into organization_invite(id, inviter_org, status, invited_user, creation_datetime) VALUES ('invite_6_id', 'org_3_id', 'REJECTED', 'jane_doe_id', '2025-02-21T00:00:00.00Z');
+insert into organization_invite(id, inviter_org, status, invited_user, creation_datetime) VALUES ('invite_7_id', 'org_4_id', 'PENDING', 'jane_doe_id', '2025-02-21T00:00:00.00Z');
+insert into organization_invite(id, inviter_org, status, invited_user, creation_datetime) VALUES ('invite_8_id', 'org_2_id', 'PENDING', 'joe-doe-id', '2025-02-21T00:00:00.00Z');
+insert into organization_invite(id, inviter_org, status, invited_user, creation_datetime) VALUES ('invite_9_id', 'org_5_id', 'ACCEPTED', 'jane_doe_id', '2025-02-21T00:00:00.00Z');
+insert into organization_invite(id, inviter_org, status, invited_user) VALUES ('invite_10_id', 'org_1_id', 'ACCEPTED', 'lorem_ipsum_id');
+insert into organization_invite(id, inviter_org, status, invited_user) VALUES ('invite_11_id', 'org_2_id', 'ACCEPTED', 'lorem_ipsum_id');
+insert into organization_invite(id, inviter_org, status, invited_user) VALUES ('invite_12_id', 'org_3_id', 'ACCEPTED', 'lorem_ipsum_id');
+insert into organization_invite(id, inviter_org, status, invited_user) VALUES ('invite_13_id', 'org_4_id', 'ACCEPTED', 'lorem_ipsum_id');
+insert into organization_invite(id, inviter_org, status, invited_user) VALUES ('invite_14_id', 'org-JoeDoe-id', 'PENDING', 'lorem_ipsum_id');
+insert into organization_invite(id, inviter_org, status, invited_user) VALUES ('invite_15_id', 'org-JoeDoe-id', 'PENDING', 'jane_doe_id');
+insert into organization_invite(id, inviter_org, status, invited_user) VALUES ('invite_16_id', 'org-JoeDoe-id', 'PENDING', 'denis_ritchie_id');
+insert into organization_invite(id, inviter_org, status, invited_user) VALUES ('invite_17_id', 'org-JaneDoe-id', 'PENDING', 'joe-doe-id');
+insert into organization_invite(id, inviter_org, status, invited_user) VALUES ('invite_31_id', 'org-JoeDoe-id', 'ACCEPTED', 'lorem_ipsum_id');
+insert into organization_invite(id, inviter_org, status, invited_user) VALUES ('invite_33_id', 'org-JoeDoe-id', 'ACCEPTED', 'noobie_id');
+insert into organization_invite(id, inviter_org, status, invited_user) VALUES ('invite_34_id', 'org-JoeDoe-id', 'ACCEPTED', 'admin_id');
+insert into organization_invite(id, inviter_org, status, invited_user) VALUES ('invite_30_id', 'org-LoremIpsum-id', 'PENDING', 'lorem_ipsum_id');
+

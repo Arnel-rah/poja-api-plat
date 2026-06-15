@@ -1,0 +1,1 @@
+alter table if exists "stack" alter column  cf_stack_id drop not null;

@@ -1,0 +1,39 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "LambdaDashboard",
+      "Effect": "Allow",
+      "Action": [
+        "lambda:List*",
+        "lambda:Get*"
+      ],
+      "Resource": [
+        "arn:aws:lambda:eu-west-3:194722427213:function:preprod-compute-doc-ping-FrontalFunction-TGmGOp5bf69y",
+        "arn:aws:lambda:eu-west-3:194722427213:function:preprod-compute-doc-scheduled-task-WorkerFunction1-jmR26sxq1atb"
+      ]
+    },
+    {
+      "Sid": "CloudwatchLogs",
+      "Effect": "Allow",
+      "Action": [
+        "logs:GetLogRecord",
+        "logs:GetLogEvents",
+        "logs:FilterLogEvents"
+      ],
+      "Resource": [
+        "arn:aws:logs:eu-west-3:194722427213:log-group:/aws/lambda/preprod-compute-doc-ping-FrontalFunction-TGmGOp5bf69y:*",
+        "arn:aws:logs:eu-west-3:194722427213:log-group:/aws/lambda/preprod-compute-doc-scheduled-task-WorkerFunction1-jmR26sxq1atb:*"
+      ]
+    },
+    {
+      "Sid": "CloudwatchMetrics",
+      "Effect": "Allow",
+      "Action": [
+        "cloudwatch:GetMetricData",
+        "cloudwatch:ListMetrics"
+      ],
+      "Resource": "*"
+    }
+  ]
+}

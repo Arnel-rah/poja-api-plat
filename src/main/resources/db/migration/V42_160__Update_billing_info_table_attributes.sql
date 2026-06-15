@@ -1,0 +1,1 @@
+alter table if exists "billing_info" add column if not exists computed_memory_duration_in_mb_minutes numeric;

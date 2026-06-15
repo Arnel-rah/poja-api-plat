@@ -1,0 +1,257 @@
+openapi: 3.1.0
+operations:
+  offers:
+    get:
+      tags:
+        - Subscription
+      summary: list all offers
+      operationId: getOffers
+      responses:
+        "200":
+          description: list of all offers
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetOffersResponse"
+        "400":
+          $ref: "./api.yml#/components/responses/400"
+        "404":
+          $ref: "./api.yml#/components/responses/404"
+        "429":
+          $ref: "./api.yml#/components/responses/429"
+        "500":
+          $ref: "./api.yml#/components/responses/500"
+  offer:
+    get:
+      tags:
+        - Subscription
+      summary: get offer by id
+      operationId: getOfferById
+      parameters:
+        - name: offer_id
+          in: path
+          required: true
+          description: the identified offer
+          schema:
+            type: string
+      responses:
+        "200":
+          description: the specified offer
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Offer"
+        "400":
+          $ref: "./api.yml#/components/responses/400"
+        "404":
+          $ref: "./api.yml#/components/responses/404"
+        "429":
+          $ref: "./api.yml#/components/responses/429"
+        "500":
+          $ref: "./api.yml#/components/responses/500"
+  subscriptions:
+    parameters:
+      - $ref: "./api.yml#/components/parameters/userId"
+    get:
+      tags:
+        - User
+        - Subscription
+      parameters:
+        - name: active
+          in: query
+          description: filter by subscription is active
+          schema:
+            type: boolean
+      summary: list all user subscriptions
+      operationId: getUserSubscriptions
+      responses:
+        "200":
+          description: list of all user subscriptions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetUserSubscriptionsResponse"
+        "400":
+          $ref: "./api.yml#/components/responses/400"
+        "404":
+          $ref: "./api.yml#/components/responses/404"
+        "429":
+          $ref: "./api.yml#/components/responses/429"
+        "500":
+          $ref: "./api.yml#/components/responses/500"
+    post:
+      tags:
+        - User
+        - Subscription
+      summary: subscribes to an offer
+      operationId: subscribe
+      requestBody:
+        required: true
+        description: >
+          The offer to subscribe to, 
+          offer fees will be deducted only once and until you unsub and sub again
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubscribeRequestBody"
+      responses:
+        "200":
+          description: the made subscription
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserSubscription"
+        "400":
+          $ref: "./api.yml#/components/responses/400"
+        "404":
+          $ref: "./api.yml#/components/responses/404"
+        "429":
+          $ref: "./api.yml#/components/responses/429"
+        "500":
+          $ref: "./api.yml#/components/responses/500"
+
+  subscription:
+    parameters:
+      - $ref: "./api.yml#/components/parameters/userId"
+      - $ref: "#/components/parameters/subscriptionId"
+    get:
+      tags:
+        - User
+        - Subscription
+      summary: get subscription by id
+      operationId: getUserSubscription
+      responses:
+        "200":
+          description: the specified subscription
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserSubscription"
+        "400":
+          $ref: "./api.yml#/components/responses/400"
+        "404":
+          $ref: "./api.yml#/components/responses/404"
+        "429":
+          $ref: "./api.yml#/components/responses/429"
+        "500":
+          $ref: "./api.yml#/components/responses/500"
+    delete:
+      tags:
+        - User
+        - Subscription
+      summary: end an active subscription
+      operationId: unsubscribe
+      responses:
+        "200":
+          description: the ended subscription
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserSubscription"
+        "400":
+          $ref: "./api.yml#/components/responses/400"
+        "404":
+          $ref: "./api.yml#/components/responses/404"
+        "429":
+          $ref: "./api.yml#/components/responses/429"
+        "500":
+          $ref: "./api.yml#/components/responses/500"
+  subscriptionPayment:
+    parameters:
+      - $ref: "./api.yml#/components/parameters/userId"
+      - $ref: "#/components/parameters/subscriptionId"
+    post:
+      tags:
+        - User
+        - Subscription
+        - Payment
+      security:
+        - bearerAuth: []
+      operationId: paySubscription
+      summary: Pay invoice manually in case of failure
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "./payment-api.yml#/components/schemas/PayInvoice"
+      responses:
+        "200":
+          description: Payment updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubscriptionPayment"
+components:
+  parameters:
+    subscriptionId:
+      name: subscription_id
+      in: path
+      required: true
+      description: the identified subscription
+      schema:
+        type: string
+  schemas:
+    Offer:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        price:
+          type: number
+        nb_max_subscribers:
+          type: integer
+          format: int64
+        max_apps:
+          type: integer
+          format: int64
+        remaining_places:
+          type: integer
+          format: int64
+    GetOffersResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Offer"
+    SubscribeRequestBody:
+      type: object
+      properties:
+        offer_id:
+          type: string
+    UserSubscription:
+      type: object
+      properties:
+        id:
+          type: string
+        user_id:
+          type: string
+        offer_id:
+          type: string
+        invoice:
+          $ref: "./payment-api.yml#/components/schemas/Invoice"
+        subscription_begin_datetime:
+          type: string
+          format: date-time
+        subscription_end_datetime:
+          type: string
+          format: date-time
+        is_active:
+          type: boolean
+    SubscriptionPayment:
+      type: object
+      properties:
+        invoice:
+          $ref: "./payment-api.yml#/components/schemas/Invoice"
+        user_subscription_id:
+          type: string
+    GetUserSubscriptionsResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserSubscription"

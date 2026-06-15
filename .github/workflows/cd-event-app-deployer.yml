@@ -1,0 +1,48 @@
+name: CD App Deployer Event
+
+on:
+  workflow_run:
+    workflows:
+      - "CD event"
+    types:
+      - completed
+    branches:
+      - 'prod'
+      - 'preprod'
+  workflow_dispatch:
+
+jobs:
+  cd-app-deployer-event:
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       (github.event.workflow_run.head_branch == 'prod' ||
+        github.event.workflow_run.head_branch == 'preprod'))
+
+    runs-on: ubuntu-latest
+
+    timeout-minutes: 10
+
+    env:
+      AWS_REGION: eu-west-3
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.1.6
+        with:
+          ref: ${{ github.event.workflow_run.head_branch || github.ref }}
+      - uses: hei-school/aws-credentials-setter@v1.0.3
+        with:
+          secrets: ${{ toJSON(secrets) }}
+          region: ${{ env.AWS_REGION }}
+
+      - name: Deploy app deployer event stack
+        uses: aws-actions/aws-cloudformation-github-deploy@v1
+        with:
+          name: ${{ github.event.workflow_run.head_branch || github.ref_name }}-app-deployer-event-poja-api-plat-10f4a86e
+          template: cf-stacks/app-deployer-event-stack.yml
+          tags: "[ { \"Key\": \"app\", \"Value\": \"poja-plat-10f4a86e-api\" },{ \"Key\": \"app\", \"Value\": \"poja-app-deployer\" }, { \"Key\": \"env\", \"Value\": \"${{ github.event.workflow_run.head_branch || github.ref_name }}\" }, { \"Key\": \"user:poja\", \"Value\": \"poja-plat-10f4a86e-api\" }, { \"Key\": \"platform:instanceid\", \"Value\": \"10f4a86e-d075-4eb2-9611-d1a69bb4ec53\" }, { \"Key\": \"platform:instancename\", \"Value\": \"projet-1\" }, { \"Key\": \"platform:customerid\", \"Value\": \"898ebaca-2db4-4849-b4dd-ac29b7180e01\" }, { \"Key\": \"platform:subscriptionid\", \"Value\": \"838785b5-1c63-4a3c-8cd4-9d461d95cdb8\" } ]"
+          capabilities: CAPABILITY_NAMED_IAM
+          no-fail-on-empty-changeset: "1"
+          parameter-overrides:
+            "Env=${{ github.event.workflow_run.head_branch || github.ref_name }}"

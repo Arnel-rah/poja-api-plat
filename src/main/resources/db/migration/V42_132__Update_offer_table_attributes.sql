@@ -1,0 +1,1 @@
+alter table if exists "offer" drop column max_subscribers;
