@@ -2,13 +2,10 @@ package api.poja.io.model;
 
 import api.poja.io.file.bucket.BucketComponent;
 import jakarta.annotation.PostConstruct;
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-
 import lombok.Getter;
-import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -28,6 +25,7 @@ public class AppPemLoader {
 
   @PostConstruct
   public void init() throws IOException {
-    this.rs256privateKey = Files.readString(Path.of("N:/nel-project/PROJET1/poja-api-plat/dummy.pem"));
+    this.rs256privateKey =
+        Files.readString(Path.of("N:/nel-project/PROJET1/poja-api-plat/dummy.pem"));
   }
 }

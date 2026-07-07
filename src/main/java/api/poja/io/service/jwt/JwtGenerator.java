@@ -46,6 +46,4 @@ public class JwtGenerator {
     }
     return builder.compact();
   }
-
-
 }

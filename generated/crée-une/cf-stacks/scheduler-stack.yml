@@ -1,0 +1,106 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Description: poja-plat-10f4a86e-api - Scheduler
+
+Parameters:
+  Env:
+    Type: String
+
+Resources:
+  ScheduledEventExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Join [ '', [ poja-plat-10f4a86e-api-, !Ref Env, -ScheduledEventExecutionRole ] ]
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: scheduler.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/AdministratorAccess'
+
+  RefreshUsersBillingInfo:
+    Type: AWS::Scheduler::Schedule
+    Properties:
+      Description: Scheduler that triggers the refresh of users billing info
+      FlexibleTimeWindow:
+        Mode: "OFF"
+      Name: !Join [ '', [ !Ref Env, -RefreshUsersBillingInfo-plat-10f4a86e ] ]
+      ScheduleExpression: "cron(0 6,12,18 * * ? *)"
+      Target:
+        Arn: !Sub '{{resolve:ssm:/poja-plat-10f4a86e-api/${Env}/eventbridge/bus-arn}}'
+        RoleArn: !GetAtt ScheduledEventExecutionRole.Arn
+        DeadLetterConfig:
+          Arn: !Sub '{{resolve:ssm:/poja-plat-10f4a86e-api/${Env}/1/sqs/dead-letter-queue-arn}}'
+        EventBridgeParameters:
+          DetailType: 'api.poja.io.endpoint.event.model.RefreshUsersBillingInfoTriggered'
+          Source: 'api.poja.io.event1'
+
+  EndOfDayRefreshUsersBillingInfo:
+    Type: AWS::Scheduler::Schedule
+    Properties:
+      Description: Scheduler that triggers the refresh of users billing info
+      FlexibleTimeWindow:
+        Mode: "OFF"
+      Name: !Join [ '', [ !Ref Env, -EndOfDayRefreshUsersBillingInfo-plat-10f4a86e ] ]
+      ScheduleExpression: "cron(0 0 * * ? *)"
+      Target:
+        Arn: !Sub '{{resolve:ssm:/poja-plat-10f4a86e-api/${Env}/eventbridge/bus-arn}}'
+        RoleArn: !GetAtt ScheduledEventExecutionRole.Arn
+        DeadLetterConfig:
+          Arn: !Sub '{{resolve:ssm:/poja-plat-10f4a86e-api/${Env}/1/sqs/dead-letter-queue-arn}}'
+        EventBridgeParameters:
+          DetailType: 'api.poja.io.endpoint.event.model.EndOfDayRefreshUsersBillingInfoTriggered'
+          Source: 'api.poja.io.event1'
+
+  MonthlyPaymentAttemptsScheduler:
+    Type: AWS::Scheduler::Schedule
+    Properties:
+      Description: Scheduler which triggers paymentAttempts function
+      FlexibleTimeWindow:
+        Mode: "OFF"
+      Name: !Join [ '', [ !Ref Env, -MonthlyPaymentAttemptsScheduler-plat-10f4a86e ] ]
+      ScheduleExpression: "cron(0 0 1 * ? *)"
+      Target:
+        Arn: !Sub '{{resolve:ssm:/poja-plat-10f4a86e-api/${Env}/eventbridge/bus-arn}}'
+        RoleArn: !GetAtt ScheduledEventExecutionRole.Arn
+        DeadLetterConfig:
+          Arn: !Sub '{{resolve:ssm:/poja-plat-10f4a86e-api/${Env}/1/sqs/dead-letter-queue-arn}}'
+        EventBridgeParameters:
+          DetailType: 'api.poja.io.endpoint.event.model.PaymentAttemptTriggered'
+          Source: 'api.poja.io.event1'
+
+  UsersSubscriptionRenewalRequestedScheduler:
+    Type: AWS::Scheduler::Schedule
+    Properties:
+      Description: Scheduler which renews user subscriptions
+      FlexibleTimeWindow:
+        Mode: "OFF"
+      Name: !Join [ '', [ !Ref Env, -UsersSubscriptionRenewalRequestedScheduler-plat-10f4a86e ] ]
+      ScheduleExpression: "cron(0 0 L * ? *)"
+      Target:
+        Arn: !Sub '{{resolve:ssm:/poja-plat-10f4a86e-api/${Env}/eventbridge/bus-arn}}'
+        RoleArn: !GetAtt ScheduledEventExecutionRole.Arn
+        DeadLetterConfig:
+          Arn: !Sub '{{resolve:ssm:/poja-plat-10f4a86e-api/${Env}/1/sqs/dead-letter-queue-arn}}'
+        EventBridgeParameters:
+          DetailType: 'api.poja.io.endpoint.event.model.UsersSubscriptionRenewalRequested'
+          Source: 'api.poja.io.event1'
+
+  RefreshUsersCost:
+    Type: AWS::Scheduler::Schedule
+    Properties:
+      Description: Scheduler which refreshes user costs
+      FlexibleTimeWindow:
+        Mode: "OFF"
+      Name: !Join [ '', [ !Ref Env, -RefreshUsersCost-plat-10f4a86e ] ]
+      ScheduleExpression: "cron(0 3 * * ? *)"
+      Target:
+        Arn: !Sub '{{resolve:ssm:/poja-plat-10f4a86e-api/${Env}/eventbridge/bus-arn}}'
+        RoleArn: !GetAtt ScheduledEventExecutionRole.Arn
+        DeadLetterConfig:
+          Arn: !Sub '{{resolve:ssm:/poja-plat-10f4a86e-api/${Env}/1/sqs/dead-letter-queue-arn}}'
+        EventBridgeParameters:
+          DetailType: 'api.poja.io.endpoint.event.model.RefreshUsersCostTriggered'
+          Source: 'api.poja.io.event1'
