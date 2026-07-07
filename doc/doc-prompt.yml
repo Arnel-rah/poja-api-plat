@@ -1,0 +1,407 @@
+openapi: 3.0.3
+info:
+  title: POJA Prompt to Deploy API
+  description: |
+    API pour générer et déployer des applications à partir d'une description textuelle (prompt).
+    
+    ## Fonctionnalités
+    - Analyse du prompt par LLM
+    - Génération de code
+    - Déploiement automatique
+    - Suivi du statut
+  version: 1.0.0
+  contact:
+    name: POJA Team
+    email: support@poja.io
+
+servers:
+  - url: http://localhost:8080
+    description: Serveur de développement
+  - url: https://api.poja.io
+    description: Serveur de production
+
+tags:
+  - name: Prompt
+    description: Opérations liées au Prompt to Deploy
+  - name: Status
+    description: Suivi des déploiements
+
+paths:
+  /prompt/deploy:
+    post:
+      tags:
+        - Prompt
+      summary: Déployer une application à partir d'un prompt
+      description: |
+        Analyse un prompt en langage naturel, génère le code correspondant
+        et déploie l'application sur l'infrastructure POJA.
+      operationId: deployFromPrompt
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PromptDeployRequest'
+            examples:
+              api-rest:
+                summary: API REST Spring Boot
+                value:
+                  prompt: "Crée une API REST avec Spring Boot pour gérer des utilisateurs. Fonctionnalités : inscription, connexion, gestion de profil, authentification JWT, et rôles (USER/ADMIN)."
+                  applicationName: "user-management-api"
+                  organizationId: "80bf524e-8587-496a-a7c0-992443b6e5c4"
+              dashboard:
+                summary: Dashboard React
+                value:
+                  prompt: "Crée un dashboard administratif avec React et Material-UI. Affiche des statistiques, des graphiques et une liste d'utilisateurs. Intègre une authentification et des rôles."
+                  applicationName: "admin-dashboard"
+                  organizationId: "80bf524e-8587-496a-a7c0-992443b6e5c4"
+              microservice:
+                summary: Microservice Node.js
+                value:
+                  prompt: "Crée un microservice en Node.js avec Express pour gérer des notifications. Utilise MongoDB pour stocker les données et Redis pour la mise en cache."
+                  applicationName: "notification-service"
+                  organizationId: "80bf524e-8587-496a-a7c0-992443b6e5c4"
+      responses:
+        '202':
+          description: Déploiement accepté et en cours
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PromptDeployResponse'
+              examples:
+                success:
+                  summary: Succès
+                  value:
+                    applicationId: "app-1234567890"
+                    applicationName: "user-management-api"
+                    status: "DEPLOYING"
+                    repositoryUrl: "https://github.com/poja/user-management-api"
+                    deploymentUrl: "https://user-management-api.poja.io"
+                    message: "Déploiement en cours... Étape 2/4 : Génération du code"
+        '400':
+          description: Requête invalide
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalidPrompt:
+                  value:
+                    code: "INVALID_PROMPT"
+                    message: "Le prompt est vide ou trop court"
+                    details: "Le prompt doit contenir au moins 20 caractères"
+                invalidOrg:
+                  value:
+                    code: "INVALID_ORGANIZATION"
+                    message: "Organisation introuvable"
+                    details: "L'ID d'organisation fourni n'existe pas"
+        '401':
+          description: Non authentifié
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: "UNAUTHORIZED"
+                message: "Authentification requise"
+        '403':
+          description: Accès refusé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: "FORBIDDEN"
+                message: "Vous n'avez pas les droits pour déployer"
+        '429':
+          description: Trop de requêtes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: "RATE_LIMIT"
+                message: "Trop de demandes de déploiement (max 5/min)"
+        '500':
+          description: Erreur interne
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: "INTERNAL_ERROR"
+                message: "Erreur lors du déploiement"
+                details: "Le service LLM n'a pas répondu dans les délais"
+
+  /prompt/status/{deploymentId}:
+    get:
+      tags:
+        - Status
+      summary: Récupérer le statut d'un déploiement
+      description: |
+        Retourne le statut en temps réel d'un déploiement.
+        Utilisé pour afficher la barre de progression.
+      operationId: getDeploymentStatus
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: deploymentId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID du déploiement
+          example: "app-1234567890"
+      responses:
+        '200':
+          description: Statut du déploiement
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeploymentStatusResponse'
+              examples:
+                deploying:
+                  summary: En cours
+                  value:
+                    deploymentId: "app-1234567890"
+                    applicationName: "user-management-api"
+                    status: "DEPLOYING"
+                    progress: 50
+                    currentStep: "Génération du code"
+                    steps:
+                      - name: "Analyse du prompt"
+                        status: "COMPLETED"
+                        progress: 100
+                      - name: "Génération du code"
+                        status: "IN_PROGRESS"
+                        progress: 60
+                      - name: "Création du repository"
+                        status: "PENDING"
+                        progress: 0
+                      - name: "Déploiement"
+                        status: "PENDING"
+                        progress: 0
+                    logs:
+                      - timestamp: "2026-06-21T10:00:00Z"
+                        message: "Analyse terminée"
+                      - timestamp: "2026-06-21T10:00:30Z"
+                        message: "Génération du code... 60%"
+                success:
+                  summary: Terminé avec succès
+                  value:
+                    deploymentId: "app-1234567890"
+                    applicationName: "user-management-api"
+                    status: "DEPLOYED"
+                    progress: 100
+                    currentStep: "Déploiement terminé"
+                    deploymentUrl: "https://user-management-api.poja.io"
+                    repositoryUrl: "https://github.com/poja/user-management-api"
+                    steps:
+                      - name: "Analyse du prompt"
+                        status: "COMPLETED"
+                        progress: 100
+                      - name: "Génération du code"
+                        status: "COMPLETED"
+                        progress: 100
+                      - name: "Création du repository"
+                        status: "COMPLETED"
+                        progress: 100
+                      - name: "Déploiement"
+                        status: "COMPLETED"
+                        progress: 100
+                    logs:
+                      - timestamp: "2026-06-21T10:00:00Z"
+                        message: "Analyse terminée"
+                      - timestamp: "2026-06-21T10:00:30Z"
+                        message: "Code généré"
+                      - timestamp: "2026-06-21T10:01:00Z"
+                        message: "Repository créé"
+                      - timestamp: "2026-06-21T10:02:00Z"
+                        message: "Déploiement réussi !"
+                error:
+                  summary: Échec
+                  value:
+                    deploymentId: "app-1234567890"
+                    applicationName: "user-management-api"
+                    status: "FAILED"
+                    progress: 45
+                    currentStep: "Erreur lors de la génération du code"
+                    error: "Le LLM n'a pas répondu"
+                    steps:
+                      - name: "Analyse du prompt"
+                        status: "COMPLETED"
+                        progress: 100
+                      - name: "Génération du code"
+                        status: "FAILED"
+                        progress: 30
+                    logs:
+                      - timestamp: "2026-06-21T10:00:00Z"
+                        message: "Analyse terminée"
+                      - timestamp: "2026-06-21T10:00:30Z"
+                        message: "Erreur: Timeout du LLM"
+        '404':
+          description: Déploiement non trouvé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: "NOT_FOUND"
+                message: "Déploiement introuvable"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        Token JWT obtenu via l'authentification GitHub OAuth.
+        Format: `Authorization: Bearer <token>`
+
+  schemas:
+    PromptDeployRequest:
+      type: object
+      required:
+        - prompt
+      properties:
+        prompt:
+          type: string
+          description: Description de l'application en langage naturel
+          minLength: 10
+          maxLength: 10000
+          example: "Crée une API REST avec Spring Boot pour gérer des utilisateurs"
+        applicationName:
+          type: string
+          description: Nom souhaité pour l'application (optionnel, sera généré si absent)
+          pattern: ^[a-z][a-z0-9-]*$
+          example: "user-management-api"
+        organizationId:
+          type: string
+          description: ID de l'organisation cible
+          example: "80bf524e-8587-496a-a7c0-992443b6e5c4"
+
+    PromptDeployResponse:
+      type: object
+      properties:
+        applicationId:
+          type: string
+          description: ID unique de l'application créée
+          example: "app-1234567890"
+        applicationName:
+          type: string
+          description: Nom de l'application
+          example: "user-management-api"
+        status:
+          type: string
+          enum:
+            - DEPLOYING
+            - DEPLOYED
+            - FAILED
+          description: Statut du déploiement
+          example: "DEPLOYING"
+        repositoryUrl:
+          type: string
+          description: URL du repository GitHub créé
+          example: "https://github.com/poja/user-management-api"
+        deploymentUrl:
+          type: string
+          description: URL de l'application déployée
+          example: "https://user-management-api.poja.io"
+        message:
+          type: string
+          description: Message d'information
+          example: "Déploiement en cours... Étape 2/4"
+
+    DeploymentStatusResponse:
+      type: object
+      properties:
+        deploymentId:
+          type: string
+          example: "app-1234567890"
+        applicationName:
+          type: string
+          example: "user-management-api"
+        status:
+          type: string
+          enum:
+            - PENDING
+            - DEPLOYING
+            - DEPLOYED
+            - FAILED
+        progress:
+          type: integer
+          minimum: 0
+          maximum: 100
+          example: 50
+        currentStep:
+          type: string
+          example: "Génération du code"
+        deploymentUrl:
+          type: string
+          example: "https://user-management-api.poja.io"
+        repositoryUrl:
+          type: string
+          example: "https://github.com/poja/user-management-api"
+        error:
+          type: string
+          description: Message d'erreur en cas d'échec
+          example: "Le LLM n'a pas répondu"
+        steps:
+          type: array
+          items:
+            $ref: '#/components/schemas/StepStatus'
+        logs:
+          type: array
+          items:
+            $ref: '#/components/schemas/LogEntry'
+
+    StepStatus:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "Analyse du prompt"
+        status:
+          type: string
+          enum:
+            - PENDING
+            - IN_PROGRESS
+            - COMPLETED
+            - FAILED
+          example: "IN_PROGRESS"
+        progress:
+          type: integer
+          minimum: 0
+          maximum: 100
+          example: 60
+
+    LogEntry:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          example: "2026-06-21T10:00:00Z"
+        message:
+          type: string
+          example: "Génération du code... 60%"
+
+    ErrorResponse:
+      type: object
+      properties:
+        code:
+          type: string
+          example: "INVALID_PROMPT"
+        message:
+          type: string
+          example: "Le prompt est vide ou trop court"
+        details:
+          type: string
+          example: "Le prompt doit contenir au moins 20 caractères"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2026-06-21T10:00:00Z"
