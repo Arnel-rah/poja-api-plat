@@ -248,6 +248,7 @@ implementation 'com.google.googlejavaformat:google-java-format:1.23.0'
 implementation 'software.amazon.awssdk:costexplorer:2.44.0'
 implementation 'com.mailjet:mailjet-client:6.0.0'
 implementation 'software.amazon.awssdk:sts:2.44.0'
-
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
 
 }

@@ -1,3 +1,4 @@
+
 package api.poja.io.model;
 
 import lombok.AllArgsConstructor;
@@ -10,12 +11,15 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PromptToDeployResponse {
-  private String promptRequestId;
+  private String requestId;
   private String status;
-  private ApplicationSummary application;
-  private String errorMessage;
+  private String downloadUrl;
+  private String fileName;
+  private String message;
   private String createdAt;
   private String updatedAt;
+  private ApplicationSummary application;
+  private String errorMessage;
 
   @Data
   @Builder
