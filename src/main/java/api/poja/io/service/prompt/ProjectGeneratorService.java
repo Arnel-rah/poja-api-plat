@@ -1,13 +1,13 @@
 package api.poja.io.service.prompt;
 
+import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
 import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.HashMap;
-import java.util.Map;
-import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
-import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j
@@ -15,124 +15,154 @@ public class ProjectGeneratorService {
 
   private static final String OUTPUT_DIR = "generated/";
 
+  private static final String[] CRITICAL_FILES = {
+          "build.gradle",
+          "settings.gradle"
+  };
+
+  private static final String[] OPTIONAL_FILES = {
+          "gradlew",
+          "gradlew.bat",
+          "lombok.config",
+          "dummy.pem"
+  };
+
+  private static final String[] FOLDERS_TO_COPY = {
+          ".github",
+          ".scripts",
+          ".shell",
+          "cf-stacks",
+          "doc",
+          "gradle"
+  };
+
+  @Value("${poja.template.source-dir:.}")
+  private String templateSourceDir;
+
   public String generate(PromptAnalysis analysis) throws IOException {
     String appName = analysis.getApplicationName();
     String outputPath = OUTPUT_DIR + appName + "/";
 
-    log.info("Generating project structure for: {}", appName);
+    Path sourceRoot = Paths.get(templateSourceDir).toAbsolutePath().normalize();
+    log.info("Generating project structure for: {} (template source: {})", appName, sourceRoot);
 
-    Files.createDirectories(Paths.get(outputPath));
+    checkCriticalFilesExist(sourceRoot);
 
-    copyProjectStructure(outputPath);
+    Path outputDir = Paths.get(outputPath);
+    if (Files.exists(outputDir)) {
+      deleteDirectory(outputDir);
+    }
+    Files.createDirectories(outputDir);
 
-    customizeFiles(outputPath, analysis);
-
-    generateSourceFiles(outputPath, analysis);
+    copyEssentialFiles(sourceRoot, appName);
 
     return outputPath;
   }
 
-  private void copyProjectStructure(String outputPath) throws IOException {
-    String[] folders = {".github", ".scripts", ".shell", "cf-stacks", "gradle"};
-    for (String folder : folders) {
-      Path source = Paths.get(folder);
-      if (Files.exists(source)) {
-        copyDirectory(source, Paths.get(outputPath + folder));
+  private void checkCriticalFilesExist(Path sourceRoot) throws IOException {
+    for (String file : CRITICAL_FILES) {
+      Path source = sourceRoot.resolve(file);
+      if (!Files.exists(source)) {
+        throw new IOException(
+                "Critical bootstrap file missing: " + source + ". "
+                        + "Set poja.template.source-dir to the poja-api-plat repository root "
+                        + "if the application is not started from there."
+        );
       }
     }
   }
 
-  private void copyDirectory(Path source, Path target) throws IOException {
-    Files.walkFileTree(
-        source,
-        new SimpleFileVisitor<Path>() {
-          @Override
-          public @NotNull FileVisitResult preVisitDirectory(
-              @NotNull Path dir, @NotNull BasicFileAttributes attrs) throws IOException {
-            Path targetDir = target.resolve(source.relativize(dir));
-            if (!Files.exists(targetDir)) {
-              Files.createDirectories(targetDir);
-            }
-            return FileVisitResult.CONTINUE;
-          }
+  private void copyEssentialFiles(Path sourceRoot, String appName) throws IOException {
+    String targetDir = OUTPUT_DIR + appName + "/";
 
-          @Override
-          public @NotNull FileVisitResult visitFile(
-              @NotNull Path file, @NotNull BasicFileAttributes attrs) throws IOException {
-            if (shouldIgnore(file)) {
-              return FileVisitResult.CONTINUE;
-            }
-            Path targetFile = target.resolve(source.relativize(file));
-            Files.copy(file, targetFile, StandardCopyOption.REPLACE_EXISTING);
-            return FileVisitResult.CONTINUE;
-          }
-        });
+    for (String folder : FOLDERS_TO_COPY) {
+      Path source = sourceRoot.resolve(folder);
+      Path target = Paths.get(targetDir + folder);
+      if (Files.exists(source)) {
+        copyDirectory(source, target);
+        log.info("Copied folder: {}", folder);
+      } else {
+        log.warn("Optional folder not found, skipping: {}", source);
+      }
+    }
+
+    for (String file : CRITICAL_FILES) {
+      Path source = sourceRoot.resolve(file);
+      Path target = Paths.get(targetDir + file);
+      Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
+      log.info("Copied critical file: {}", file);
+    }
+
+    for (String file : OPTIONAL_FILES) {
+      Path source = sourceRoot.resolve(file);
+      Path target = Paths.get(targetDir + file);
+      if (Files.exists(source)) {
+        Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
+        log.info("Copied optional file: {}", file);
+      } else {
+        log.warn("Optional file not found, skipping: {}", source);
+      }
+    }
+
+    String packagePath = PackageResolver.toBasePath(appName);
+    Files.createDirectories(Paths.get(packagePath));
+    log.info("Created package structure: {}", packagePath);
+
+    String resourcesPath = PackageResolver.toResourcesPath(appName);
+    Files.createDirectories(Paths.get(resourcesPath));
+  }
+
+  private void copyDirectory(Path source, Path target) throws IOException {
+    Files.walkFileTree(source, new SimpleFileVisitor<Path>() {
+      @Override
+      public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+        Path targetDir = target.resolve(source.relativize(dir));
+        if (!Files.exists(targetDir)) {
+          Files.createDirectories(targetDir);
+        }
+        return FileVisitResult.CONTINUE;
+      }
+
+      @Override
+      public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+        if (shouldIgnore(file)) {
+          return FileVisitResult.CONTINUE;
+        }
+        Path targetFile = target.resolve(source.relativize(file));
+        Files.copy(file, targetFile, StandardCopyOption.REPLACE_EXISTING);
+        return FileVisitResult.CONTINUE;
+      }
+    });
   }
 
   private boolean shouldIgnore(Path file) {
     String path = file.toString();
-    return path.contains(".git")
-        || path.contains("build/")
-        || path.contains(".gradle/")
-        || path.contains("generated/")
-        || path.endsWith(".iml")
-        || path.contains(".idea/");
+    return path.contains(".git") ||
+            path.contains("build" + java.io.File.separator) ||
+            path.contains(".gradle" + java.io.File.separator) ||
+            path.contains("generated" + java.io.File.separator) ||
+            path.contains("downloads" + java.io.File.separator) ||
+            path.endsWith(".iml") ||
+            path.contains(".idea" + java.io.File.separator) ||
+            path.contains("node_modules" + java.io.File.separator) ||
+            path.contains(".vscode" + java.io.File.separator);
   }
 
-  private void customizeFiles(String projectPath, PromptAnalysis analysis) throws IOException {
-    Map<String, String> replacements = new HashMap<>();
-    String appName = analysis.getApplicationName();
-    String packageName = "com." + appName.replace("-", ".");
+  private void deleteDirectory(Path dir) throws IOException {
+    if (Files.exists(dir)) {
+      Files.walkFileTree(dir, new SimpleFileVisitor<Path>() {
+        @Override
+        public FileVisitResult visitFile(@NotNull Path file, BasicFileAttributes attrs) throws IOException {
+          Files.delete(file);
+          return FileVisitResult.CONTINUE;
+        }
 
-    replacements.put("api.poja.io", packageName);
-    replacements.put("poja-plat-10f4a86e-api", appName);
-    replacements.put(
-        "Description: poja-plat-10f4a86e-api", "Description: " + analysis.getDescription());
-
-    // Personnaliser les fichiers
-    customizeFile(projectPath + "build.gradle", replacements);
-    customizeFile(projectPath + "settings.gradle", replacements);
-    customizeFile(projectPath + "gradle.properties", replacements);
-
-    // Renommer les packages
-    renamePackage(projectPath + "src/main/java/api/poja/io", packageName);
-  }
-
-  private void customizeFile(String filePath, Map<String, String> replacements) throws IOException {
-    Path path = Paths.get(filePath);
-    if (!Files.exists(path)) {
-      return;
+        @Override
+        public FileVisitResult postVisitDirectory( @NotNull Path dir, IOException exc) throws IOException {
+          Files.delete(dir);
+          return FileVisitResult.CONTINUE;
+        }
+      });
     }
-    String content = new String(Files.readAllBytes(path));
-    for (Map.Entry<String, String> entry : replacements.entrySet()) {
-      content = content.replace(entry.getKey(), entry.getValue());
-    }
-    Files.write(path, content.getBytes());
-  }
-
-  private void renamePackage(String sourcePath, String targetPackage) throws IOException {
-    Path source = Paths.get(sourcePath);
-    if (!Files.exists(source)) {
-      return;
-    }
-    String[] parts = targetPackage.split("\\.");
-    Path current = source;
-    for (String part : parts) {
-      Path newPath = current.resolveSibling(part);
-      if (!Files.exists(newPath)) {
-        Files.move(current, newPath);
-      }
-      current = newPath;
-    }
-  }
-
-  private void generateSourceFiles(String projectPath, PromptAnalysis analysis) throws IOException {
-    // TODO: Générer les fichiers source de base
-    String packagePath =
-        projectPath + "src/main/java/" + analysis.getApplicationName().replace("-", "/") + "/";
-    Files.createDirectories(Paths.get(packagePath + "controller"));
-    Files.createDirectories(Paths.get(packagePath + "service"));
-    Files.createDirectories(Paths.get(packagePath + "repository"));
-    Files.createDirectories(Paths.get(packagePath + "model"));
   }
 }
