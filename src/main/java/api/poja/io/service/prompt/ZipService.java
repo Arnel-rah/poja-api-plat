@@ -1,57 +1,76 @@
-
 package api.poja.io.service.prompt;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-@Service
 @Slf4j
+@Service
 public class ZipService {
 
-    private static final String GENERATED_DIR = "generated/";
-    private static final String DOWNLOADS_DIR = "downloads/";
+    @Value("${app.generated-dir:generated/}")
+    private String generatedDir;
 
+    @Value("${app.downloads-dir:downloads/}")
+    private String downloadsDir;
+
+    /**
+     * Creates a ZIP archive of the generated application.
+     *
+     * @param appName the name of the application
+     * @return the absolute path to the created ZIP file
+     * @throws IOException if an I/O error occurs
+     */
     public String createZip(String appName) throws IOException {
-        String sourceDir = GENERATED_DIR + appName;
+        if (appName == null || appName.trim().isEmpty()) {
+            throw new IllegalArgumentException("Application name cannot be null or empty");
+        }
+        Path sourcePath = Paths.get(generatedDir, appName).normalize();
         String zipFileName = appName + ".zip";
-        String zipPath = DOWNLOADS_DIR + zipFileName;
+        Path zipPath = Paths.get(downloadsDir, zipFileName).normalize();
 
-        log.info("Creating ZIP for: {}", appName);
+        log.info("Creating ZIP for application: {} → {}", appName, zipPath);
 
-        Files.createDirectories(Paths.get(DOWNLOADS_DIR));
+        Files.createDirectories(zipPath.getParent());
+        Files.createDirectories(sourcePath);
 
-        Path sourcePath = Paths.get(sourceDir);
-        Path zipPathObj = Paths.get(zipPath);
-
-        Files.deleteIfExists(zipPathObj);
-
-        try (FileOutputStream fos = new FileOutputStream(zipPathObj.toFile());
-             ZipOutputStream zos = new ZipOutputStream(fos)) {
-
-            Files.walk(sourcePath)
-                    .filter(path -> !Files.isDirectory(path))
-                    .forEach(path -> {
-                        try {
-                            String entryName = sourcePath.relativize(path).toString();
-                            ZipEntry zipEntry = new ZipEntry(entryName);
-                            zos.putNextEntry(zipEntry);
-                            zos.write(Files.readAllBytes(path));
-                            zos.closeEntry();
-                        } catch (IOException e) {
-                            log.error("Error adding file to ZIP: {}", e.getMessage());
-                        }
-                    });
+        if (!Files.exists(sourcePath)) {
+            throw new IOException("Source directory not found: " + sourcePath);
         }
 
-        log.info("ZIP created: {}", zipPath);
-        return zipPath;
+        Files.deleteIfExists(zipPath);
+
+        try (var fos = Files.newOutputStream(zipPath);
+             var zos = new ZipOutputStream(fos)) {
+
+            zos.setLevel(6);
+
+            Files.walk(sourcePath)
+                    .filter(Files::isRegularFile)
+                    .forEach(path -> addFileToZip(sourcePath, path, zos));
+        }
+
+        long size = Files.size(zipPath);
+        log.info("ZIP created successfully: {} ({} bytes)", zipPath, size);
+
+        return zipPath.toString();
+    }
+
+    private void addFileToZip(Path sourcePath, Path filePath, ZipOutputStream zos) {
+        try {
+            String entryName = sourcePath.relativize(filePath).toString().replace("\\", "/");
+            zos.putNextEntry(new ZipEntry(entryName));
+            Files.copy(filePath, zos);
+            zos.closeEntry();
+
+            log.debug("Added: {}", entryName);
+        } catch (IOException e) {
+            log.error("Failed to add file to ZIP: {}", filePath, e);
+        }
     }
 }
