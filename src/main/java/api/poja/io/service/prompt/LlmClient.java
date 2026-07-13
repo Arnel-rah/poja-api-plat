@@ -32,28 +32,33 @@ public class LlmClient {
         log.info("Calling OpenRouter to analyze prompt");
 
         String systemPrompt = """
-                Tu es un expert en architecture logicielle.
-                Retourne UNIQUEMENT du JSON valide, rien d'autre.
-                Pas de markdown, pas de texte explicatif.
+                You are an expert software architect.
+                Respond with **ONLY** valid JSON, nothing else. No markdown, no explanations, no extra text.
                 """;
 
         String userPrompt = """
-                Analyse cette demande et retourne le JSON suivant :
+                Analyze the following user request and return a JSON object with this exact structure:
+
                 {
-                    "applicationName": "nom-en-kebab-case",
-                    "description": "description",
+                    "applicationName": "name-in-kebab-case",
+                    "description": "clear description",
                     "techStack": "spring-boot",
                     "databaseType": "postgresql",
                     "authType": "jwt",
                     "requiresDatabase": true,
                     "requiresAuth": true,
                     "entities": [
-                        {"name": "Task", "fields": [{"name": "title", "type": "String", "required": true}]}
+                        {
+                            "name": "Task",
+                            "fields": [
+                                {"name": "title", "type": "String", "required": true}
+                            ]
+                        }
                     ],
                     "features": ["CRUD", "JWT Auth"]
                 }
 
-                Demande : %s
+                User request: %s
                 """.formatted(prompt);
 
         return callOpenRouter(systemPrompt, userPrompt, DEFAULT_MAX_TOKENS);
@@ -65,19 +70,28 @@ public class LlmClient {
         String packageName = PackageResolver.toPackageName(analysis.getApplicationName());
 
         String systemPrompt = """
-                Tu es un expert Spring Boot senior.
-                Tu génères uniquement du code Java complet et compilable, sans TODO, sans pseudo-code, sans commentaires.
-                Tu retournes UNIQUEMENT un objet JSON valide, sans balises markdown, sans texte avant ou après.
-                Le JSON doit respecter exactement ce schéma :
-                {"files":[{"path":"controller/XController.java","content":"code java complet en une seule ligne de chaîne JSON"}]}
-                Règles impératives :
-                - Utilise exactement le package %s pour toutes les classes (déclaration package en première ligne).
-                - Pour CHAQUE entité listée ci-dessous, génère 4 fichiers : le Model (@Entity JPA), le Repository (JpaRepository<Entity, Long>), le Service, et le Controller REST (GET all, GET by id, POST, PUT, DELETE, mapping /api/<entite-au-pluriel-minuscule>).
-                - Le champ "path" doit être relatif et commencer par le sous-dossier du type de classe : "model/", "repository/", "service/" ou "controller/", suivi du nom de fichier, par exemple "model/Task.java".
-                - Respecte le type et la nullabilité de chaque champ (required=true => @Column(nullable=false) côté modèle).
-                - N'inclus JAMAIS de classe @SpringBootApplication et n'inclus JAMAIS application.properties : ils existent déjà.
-                - IMPORTANT syntaxe Java : utilise TOUJOURS des guillemets doubles pour les chaînes de caractères (ex: "tasks"). Les apostrophes simples sont réservées exclusivement à un unique caractère de type char (ex: 'a'). N'utilise jamais 'texte' avec plusieurs caractères, ce n'est pas du Java valide.
-                - Le contenu de chaque fichier doit être une chaîne JSON valide avec les retours à la ligne échappés en \\n.
+                You are a senior Spring Boot expert.
+                Generate **only** complete, compilable Java code. No TODOs, no placeholders, no comments.
+                
+                Return **ONLY** a valid JSON object, no markdown, no extra text.
+                The JSON must follow this exact schema:
+                {
+                    "files": [
+                        {
+                            "path": "controller/XController.java",
+                            "content": "full java code as a single JSON string"
+                        }
+                    ]
+                }
+
+                Strict rules:
+                - Use package %s for all classes.
+                - For each entity, generate exactly 4 files: Entity (JPA @Entity), Repository, Service, and REST Controller.
+                - Path format: "model/", "repository/", "service/", or "controller/" followed by the filename.
+                - Respect field types and nullability (@Column(nullable = false) when required = true).
+                - Never generate @SpringBootApplication or application.properties.
+                - Use double quotes for all strings in Java code. Never use single quotes for String literals.
+                - Escape newlines in JSON content as \\n.
                 """.formatted(packageName);
 
         String userPrompt = buildCodeGenerationPrompt(analysis, packageName);
@@ -88,30 +102,37 @@ public class LlmClient {
     private String buildCodeGenerationPrompt(PromptAnalysis analysis, String packageName) {
         StringBuilder sb = new StringBuilder();
         sb.append("Application: ").append(analysis.getApplicationName()).append("\n");
+
         if (analysis.getDescription() != null) {
             sb.append("Description: ").append(analysis.getDescription()).append("\n");
         }
-        sb.append("Package racine: ").append(packageName).append("\n");
+
+        sb.append("Root package: ").append(packageName).append("\n");
+
         if (analysis.getDatabaseType() != null) {
-            sb.append("Base de donnees: ").append(analysis.getDatabaseType()).append("\n");
+            sb.append("Database: ").append(analysis.getDatabaseType()).append("\n");
         }
+
         if (analysis.getAuthType() != null) {
-            sb.append("Authentification: ").append(analysis.getAuthType())
-                    .append(analysis.isRequiresAuth() ? " (requise sur les endpoints sensibles)" : " (non requise)")
+            sb.append("Authentication: ").append(analysis.getAuthType())
+                    .append(analysis.isRequiresAuth() ? " (required on sensitive endpoints)" : " (not required)")
                     .append("\n");
         }
-        sb.append("Persistance base de donnees requise: ").append(analysis.isRequiresDatabase()).append("\n");
+
+        sb.append("Database persistence required: ").append(analysis.isRequiresDatabase()).append("\n");
 
         List<Map<String, Object>> entities = analysis.getEntities();
         if (entities != null && !entities.isEmpty()) {
-            sb.append("Entites a generer (genere les 4 fichiers pour chacune) :\n");
+            sb.append("Entities to generate (create 4 files for each):\n");
             for (Map<String, Object> entity : entities) {
-                sb.append("- ").append(entity.get("name")).append(" : ");
+                sb.append("- ").append(entity.get("name")).append(": ");
                 Object fieldsObj = entity.get("fields");
                 if (fieldsObj instanceof List<?> fields) {
                     for (Object f : fields) {
                         if (f instanceof Map<?, ?> field) {
-                            sb.append(field.get("name")).append("(").append(field.get("type"));
+                            sb.append(field.get("name"))
+                                    .append("(")
+                                    .append(field.get("type"));
                             if (Boolean.TRUE.equals(field.get("required"))) {
                                 sb.append(", required");
                             }
@@ -122,29 +143,29 @@ public class LlmClient {
                 sb.append("\n");
             }
         } else {
-            sb.append("Aucune entite explicite fournie, deduis une entite principale pertinente a partir de la description.\n");
+            sb.append("No explicit entities provided. Infer a relevant main entity from the description.\n");
         }
 
         if (analysis.getFeatures() != null && !analysis.getFeatures().isEmpty()) {
-            sb.append("Fonctionnalites attendues: ").append(String.join(", ", analysis.getFeatures())).append("\n");
+            sb.append("Expected features: ").append(String.join(", ", analysis.getFeatures())).append("\n");
         }
 
-        sb.append("Retourne uniquement le JSON demande, avec exactement 4 fichiers par entite listee ci-dessus.");
+        sb.append("\nReturn only the requested JSON with exactly 4 files per entity.");
         return sb.toString();
     }
 
     public String customizeTemplate(PromptAnalysis analysis, String originalTemplate) {
-        log.info("Calling OpenRouter to customize template");
+        log.info("Calling OpenRouter to customize SAM template");
 
         String systemPrompt = """
-                Tu es un expert en AWS SAM.
-                Retourne UNIQUEMENT le template modifié, rien d'autre.
+                You are an expert in AWS SAM.
+                Return **ONLY** the modified template.yml, nothing else.
                 """;
 
         String userPrompt = """
-                Personnalise ce template.yml pour l'application %s.
+                Customize this template.yml for the application "%s".
 
-                Template original:
+                Original template:
                 %s
                 """.formatted(analysis.getApplicationName(), originalTemplate);
 
@@ -165,8 +186,9 @@ public class LlmClient {
                             Map.of("role", "system", "content", systemPrompt),
                             Map.of("role", "user", "content", userPrompt)
                     ),
-                    "temperature", 0.2,
-                    "max_tokens", maxTokens
+                    "temperature", 0.1,
+                    "max_tokens", maxTokens,
+                    "response_format", Map.of("type", "json_object")
             );
 
             HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
@@ -179,31 +201,31 @@ public class LlmClient {
             );
 
             if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
-                throw new RuntimeException("OpenRouter returned error status: " + response.getStatusCode());
+                throw new RuntimeException("OpenRouter returned error: " + response.getStatusCode());
             }
 
             JsonNode jsonResponse = objectMapper.readTree(response.getBody());
             JsonNode choice = jsonResponse.path("choices").path(0);
             String finishReason = choice.path("finish_reason").asText("");
-            String content = choice.path("message").path("content").asText();
+            String content = choice.path("message").path("content").asText().trim();
 
             if ("length".equals(finishReason)) {
-                throw new RuntimeException("OpenRouter response truncated (max_tokens=" + maxTokens + " too low)");
+                throw new RuntimeException("Response truncated. Increase max_tokens.");
             }
 
-            if (content == null || content.isBlank()) {
-                throw new RuntimeException("OpenRouter returned empty content");
+            if (content.isBlank()) {
+                throw new RuntimeException("Empty response from OpenRouter");
             }
 
             log.info("OpenRouter response received ({} chars)", content.length());
             return content;
 
         } catch (HttpStatusCodeException e) {
-            log.error("OpenRouter call failed: {} - {}", e.getStatusCode(), e.getResponseBodyAsString());
-            throw new RuntimeException("OpenRouter call failed: " + e.getStatusCode() + " - " + e.getResponseBodyAsString(), e);
+            log.error("OpenRouter error: {} - {}", e.getStatusCode(), e.getResponseBodyAsString());
+            throw new RuntimeException("OpenRouter call failed", e);
         } catch (Exception e) {
-            log.error("OpenRouter call failed: {}", e.getMessage());
-            throw new RuntimeException("OpenRouter call failed: " + e.getMessage(), e);
+            log.error("OpenRouter call failed", e);
+            throw new RuntimeException("OpenRouter call failed", e);
         }
     }
 }
