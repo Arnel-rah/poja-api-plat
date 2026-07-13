@@ -83,7 +83,7 @@ public class CodeGeneratorService {
             try {
                 log.info("LLM code generation attempt {}/{}", attempt, MAX_ATTEMPTS);
                 String rawResponse = llmClient.generateCode(analysis);
-                String jsonPayload = LlmJsonExtractor.extractJsonObject(rawResponse);
+                String jsonPayload = LlmJsonExtractor.extractJson(rawResponse);
                 CodeGenerationResult result = objectMapper.readValue(jsonPayload, CodeGenerationResult.class);
 
                 validate(result);
